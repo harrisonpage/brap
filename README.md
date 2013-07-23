@@ -70,6 +70,7 @@ Under The Hood
 
 - JavaScript talks to Python via HTTP/JSON
 - Always-on Python bot connects to Jabber server
+- Type !help in channel to show current location
 
 Icons
 =====

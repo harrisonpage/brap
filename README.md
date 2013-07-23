@@ -91,3 +91,8 @@ Author
 - http://hanford.org/harrison/
 - https://github.com/harrisonpage/brap
 - 22-Jul-2013
+
+About
+=====
+
+Skinny Puppy's often informal, improvisational approach to musical composition is indicated by use of the term brap, coined by them and defined as a verb meaning "to get together, hook up electronic instruments, get high, and record".

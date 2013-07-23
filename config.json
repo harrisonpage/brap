@@ -1,0 +1,53 @@
+{
+    "title": "brap 1.0.0",
+    "favicon": "http://hanford.org/favicon.ico",
+    "geolocation": "enabled",
+    "deref": "http://www.dereferer.org/?",
+    "icons":
+    {
+        "_default":
+        {
+            "image": "/static/icons/system.png",
+            "width": "48px",
+            "height": "48px"
+        },
+        "chompy":
+        {
+            "image": "/static/icons/chompy.png",
+            "width": "48px",
+            "height": "58px"
+        },
+        "deuce":
+        {
+            "image": "/static/icons/deuce.png",
+            "width": "41px",
+            "height": "58px"
+        },
+        "pants":
+        {
+            "image": "/static/icons/pants.png",
+            "width": "48px",
+            "height": "58px"
+        },
+        "spigot":
+        {
+            "image": "/static/icons/spigot.png",
+            "width": "41px",
+            "height": "53px"
+        },
+        "effigy":
+        {
+            "image": "/static/icons/effigy.png",
+            "width": "48px",
+            "height": "48px"
+        }
+    },
+    "aliases":
+    {
+        "pants|bridge": "pants",
+        "pants|tv": "pants",
+        "pants|mobile": "pants",
+        "pants|work": "pants",
+        "deuce|mobile": "deuce"
+    }
+}

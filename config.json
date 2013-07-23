@@ -1,0 +1,31 @@
+{
+    "title": "brap 1.0.0",
+    "favicon": "http://www.google.com/favicon.ico",
+    "geolocation": "disabled",
+    "deref": "http://www.dereferer.org/?",
+    "icons":
+    {
+        "_default":
+        {
+            "image": "/static/icons/system.png",
+            "width": "48px",
+            "height": "48px"
+        },
+        "pants":
+        {
+            "image": "/static/icons/pants.png",
+            "width": "48px",
+            "height": "58px"
+        },
+        "spigot":
+        {
+            "image": "/static/icons/spigot.png",
+            "width": "41px",
+            "height": "53px"
+        }
+    },
+    "aliases":
+    {
+        "xyzzy": "pants"
+    }
+}

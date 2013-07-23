@@ -25,12 +25,12 @@ Configure the UI by editing the config.json file.
 
 Explanation of key/value pairs:
 
-  title          Page title shown by client
-  favicon        URL to an ico, png or gif file for your browser to consume
-  geolocation    Set to "enabled" to pass lon, lat and address to the server
-  deref          URL to a dereferer service
-  icons          Dictionary of username to image, width and height
-  alias          Link a username to another to avoid duplicate icon entries
+    title          Page title shown by client
+    favicon        URL to an ico, png or gif file for your browser to consume
+    geolocation    Set to "enabled" to pass lon, lat and address to the server
+    deref          URL to a dereferer service
+    icons          Dictionary of username to image, width and height
+    alias          Link a username to another to avoid duplicate icon entries
 
 Jerkcity-themed examples for icons are provided for your amusement. 
 
@@ -40,20 +40,18 @@ Options
 Usage: brap.py [options]
 
 Options:
-  -h, --help            show this help message and exit
-  -q, --quiet           set logging to ERROR
-  -d, --debug           set logging to DEBUG
-  -v, --verbose         set logging to COMM
-  -j JID, --jid=JID     JID to use
-  -p PASSWORD, --password=PASSWORD
-                        password to use
-  -r ROOM, --room=ROOM  MUC room to join
-  -x ROOM_PASSWORD, --room_password=ROOM_PASSWORD
-                        room password to use
-  -n NICK, --nick=NICK  MUC nickname
-  -u USER, --user=USER  HTTP AUTH username
-  -l HTTP_PORT, --http_port=HTTP_PORT
-                        HTTP listening port
+
+    -h, --help                                        show this help message and exit
+    -q, --quiet                                       set logging to ERROR
+    -d, --debug                                       set logging to DEBUG
+    -v, --verbose                                     set logging to COMM
+    -j JID, --jid=JID                                 JID to use
+    -p PASSWORD, --password=PASSWORD                  password to use
+    -r ROOM, --room=ROOM                              MUC room to join
+    -x ROOM_PASSWORD, --room_password=ROOM_PASSWORD   room password to use
+    -n NICK, --nick=NICK                              MUC nickname
+    -u USER, --user=USER                              HTTP AUTH username
+    -l HTTP_PORT, --http_port=HTTP_PORT               HTTP listening port
 
 Minimal Example
 ===============

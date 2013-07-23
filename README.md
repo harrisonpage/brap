@@ -56,7 +56,7 @@ Options:
 Minimal Example
 ===============
 
-./brap.py -d -u USERNAME -q -j JID -r CHANNEL -n NICK -x PASSWORD
+    ./brap.py -d -u USERNAME -q -j JID -r CHANNEL -n NICK -x PASSWORD
 
 Ingredients
 ===========

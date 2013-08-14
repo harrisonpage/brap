@@ -215,6 +215,15 @@ function escaped (string)
     );
 }
 
+function link (url, label)
+{
+    if (deref == undefined)
+    {
+        return "<a target='_blank' href='" + escaped(url) + "'>" + escaped(label) + "</a>";
+    }
+    return "<a target='_blank' href='" + deref + escaped(url) + "'>" + escaped(label) + "</a>";
+}
+
 function render_line (body)
 {
     var words = body.split (" ");
@@ -222,16 +231,16 @@ function render_line (body)
     for (var i = 0; i < words.length; i++)
     {
         var word = words[i];
+
         if (word.substr (0, 7) == 'http://' || word.substr (0, 8) == 'https://')
         {
-            if (deref == undefined)
-            {
-                list.push ("<a target='_blank' href='" + escaped(word) + "'>" + escaped(word) + "</a>");
-            }
-            else
-            {
-                list.push ("<a target='_blank' href='" + deref + escaped(word) + "'>" + escaped(word) + "</a>");
-            }
+            // clickable links
+            list.push (link (word, word));
+        }
+        else if (word.substr (0, 1) == '#')
+        {
+            // clickable hashtags
+            list.push (link ("https://twitter.com/search?q=" + word, word));
         }
         else
         {
@@ -306,11 +315,17 @@ function process_chatline (v, i)
     return msg;
 }
 
+var limits = 
+{
+    '320x548': 5, // iPhone 5
+    '320x460': 4, // iPhone 4
+};
+
 function getDefaultLimit()
 {
-    if (screen.availWidth == 320 && screen.availHeight == 548) // iPhone 5
+    if (limits[screen.availWidth + "x" + screen.availHeight] != undefined)
     {
-        return 5; // seems about right
+        return limits[screen.availWidth + "x" + screen.availHeight]; 
     }
     return 10;
 }
@@ -479,6 +494,7 @@ function showInfo()
         "<span class='key'>Lat/Lon:</span>&nbsp;" + lat + "," + lon + "<br/>" + 
         "<span class='key'>Location:</span>&nbsp;" + loc
     );
+
     $('#info').show();
 }
 
@@ -486,6 +502,10 @@ $(document).ready
 (
     function() 
     {
+        $('#device').html 
+        (
+            pair ("Dimensions", screen.availWidth + "x" + screen.availHeight)
+        );
         $("#bar").html ("Loading...");
         $("#line").focus();
         $("#line").select();
@@ -517,11 +537,11 @@ $(document).ready
         );
     }
 );
-
 </script>
 <p>
 <div class="info" id="info">
 <span id="state"></span><br/>
+<span id="device"></span><br/>
 <span id="geo"></span>
 </div>
 </p>

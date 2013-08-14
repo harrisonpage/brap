@@ -235,7 +235,7 @@ function render_line (body)
         }
         else
         {
-            list.push (word);
+            list.push (escaped(word));
         }
     }
     return list;
@@ -306,21 +306,16 @@ function process_chatline (v, i)
     return msg;
 }
 
-var max = qs.hasOwnProperty('limit') ? qs['limit'] : 10;
-
-$.ajax
-(
+function getDefaultLimit()
+{
+    if (screen.availWidth == 320 && screen.availHeight == 548) // iPhone 5
     {
-        url: '/config',
-        success: function(_data)
-        {
-            {
-                var config = jQuery.parseJSON (_data);
-                setup (config);
-            }
-        }
+        return 5; // seems about right
     }
-);
+    return 10;
+}
+
+var max = qs.hasOwnProperty('limit') ? qs['limit'] : getDefaultLimit();
 
 function changeFavIcon (url)
 {
@@ -487,21 +482,42 @@ function showInfo()
     $('#info').show();
 }
 
-$("#bar").html ("Loading...");
-$("#line").focus();
-$("#line").select();
-$('#buttons').append ('<a class="button" href="javascript:document.chat.submit()">Go</a>');
-$('#buttons').append ('<a class="button" href="/">Refresh</a>');
-$('#buttons').append ('<a class="button" href="javascript:showInfo()">Info</a>');
+$(document).ready
+(
+    function() 
+    {
+        $("#bar").html ("Loading...");
+        $("#line").focus();
+        $("#line").select();
+        $('#buttons').append ('<a class="button" href="javascript:document.chat.submit()">Go</a>');
+        $('#buttons').append ('<a class="button" href="/">Refresh</a>');
+        $('#buttons').append ('<a class="button" href="javascript:showInfo()">Info</a>');
 
-if (! qs.hasOwnProperty('limit'))
-{
-    $('#buttons').append ('<a class="button" href="/?limit=50">More</a>');
-}
-else
-{
-    $('#buttons').append ('<a class="button" href="/">Less</a>');
-}
+        if (! qs.hasOwnProperty('limit'))
+        {
+            $('#buttons').append ('<a class="button" href="/?limit=50">More</a>');
+        }
+        else
+        {
+            $('#buttons').append ('<a class="button" href="/">Less</a>');
+        }
+
+        $.ajax
+        (
+            {
+                url: '/config',
+                success: function(_data)
+                {
+                    {
+                        var config = jQuery.parseJSON (_data);
+                        setup (config);
+                    }
+                }
+            }
+        );
+    }
+);
+
 </script>
 <p>
 <div class="info" id="info">

@@ -5,31 +5,30 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <link rel="apple-touch-icon" href="static/icons/system.png"/>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+<script src="/static/js/jquery.cookie.js"></script>
 <style>
 body
 {
-    background: #efefef;
-    color: #000;
     font-family: courier;
     font-size: 105%;
     margin: 1;
     padding-bottom: 10px;
 }
 
-a:link 
+.night
 {
-    color: #000;
+    background-color: #000;
+    color: #fff;
 }
 
-a:visited 
+.day
 {
+    background-color: #fff;
     color: #000;
 }
-
-a:active 
-{
-    color: #000;
-}
+a:link, a:visited, a:active { color: #000; }
+a.day:link, a.day:visited, a.day:active { color: #000; }
+a.night:link, a.night:visited, a.night:active { color: #fff; }
 
 ul
 {
@@ -41,7 +40,7 @@ ul
 li
 {
     border-top: 1px solid #efefef;
-    border-bottom: 1px solid #dfdfdf;
+    padding-top: 1px;
     padding-bottom: 1px;
     padding-left: 55px;
     background-repeat: no-repeat; 
@@ -192,6 +191,7 @@ Date.prototype.dst = function()
 var aliases = {};
 var icons = {};
 var deref, lat, lon, loc;
+var nightmode = false;
 
 var entities = 
 {
@@ -498,10 +498,34 @@ function showInfo()
     $('#info').show();
 }
 
+function toggleMode()
+{
+    $("body").removeClass (nightmode ? 'night' : 'day');
+    $('a').removeClass (nightmode ? 'night' : 'day');
+    nightmode = ! nightmode;
+    $("body").addClass (nightmode ? 'night' : 'day');
+    $('a').addClass (nightmode ? 'night' : 'day');
+    $("#modeLabel").html (nightmode ? "Day" : "Night");
+    $("#line").focus();
+    if (nightmode)
+    {
+        $("#line").css ({'background-color': '#111', 'color': '#fff'});
+    }
+    else
+    {
+        $("#line").css ({'background-color': '#fff', 'color': '#000'});
+    }
+    $.cookie("nightmode", nightmode ? 1 : 0);
+}
+
 $(document).ready
 (
     function() 
     {
+        nightmode = $.cookie ("nightmode") == '1';
+        $("body").addClass (nightmode ? 'night' : 'day');
+        $("a").addClass (nightmode ? 'night' : 'day');
+        var modeLabel = nightmode ? "Day" : "Night"; 
         $('#device').html 
         (
             pair ("Dimensions", screen.availWidth + "x" + screen.availHeight)
@@ -512,6 +536,7 @@ $(document).ready
         $('#buttons').append ('<a class="button" href="javascript:document.chat.submit()">Go</a>');
         $('#buttons').append ('<a class="button" href="/">Refresh</a>');
         $('#buttons').append ('<a class="button" href="javascript:showInfo()">Info</a>');
+        $('#buttons').append ('<a class="button" href="javascript:toggleMode()"><span id="modeLabel">' + modeLabel + '</span></a>');
 
         if (! qs.hasOwnProperty('limit'))
         {

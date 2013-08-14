@@ -10,12 +10,12 @@ Features
 - Single-threaded Python server for backend
 - Password-protected web page (HTTP AUTH)
 - Clickable links open in new browser window
-
-Optional:
-
-- Set custom favicon.ico
+- Clickable hashtags open to twitter
+- Night mode
+- Set a custom favicon.ico
 - Set custom icons per friend
-- Track current location via maps.googleapis.com: lon, lat, street address
+- Track current location (lon, lat)
+- Track street address via maps.googleapis.com
 - Use a 3rd party service to remove referrals from links
 
 Config File
@@ -64,6 +64,7 @@ Ingredients
 - jQuery http://jquery.com/
 - Tornado http://www.tornadoweb.org/en/stable/
 - SleepXMPP http://sleekxmpp.com/
+- jquery-cookie https://github.com/carhartl/jquery-cookie (bundled)
 
 Under The Hood
 ==============
@@ -91,7 +92,7 @@ Author
 - Harrison Page <harrisonpage@gmail.com>
 - http://hanford.org/harrison/
 - https://github.com/harrisonpage/brap
-- 22-Jul-2013
+- Created 22-Jul-2013
 
 About
 =====

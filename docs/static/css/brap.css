@@ -1,0 +1,164 @@
+body
+{
+    font-family: courier;
+    font-size: 105%;
+    margin: 1;
+    padding-bottom: 10px;
+}
+
+.night
+{
+    background-color: #000;
+    color: #fff;
+}
+
+.day
+{
+    background-color: #fff;
+    color: #000;
+}
+
+a:link, a:visited, a:active 
+{ 
+    color: #000; 
+}
+
+a.day:link, a.day:visited, a.day:active
+{ 
+    color: #000; 
+}
+
+a.night:link, a.night:visited, a.night:active
+{
+    color: #fff; 
+}
+
+ul
+{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+li
+{
+    border-top: 1px solid #efefef;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-left: 55px;
+    background-repeat: no-repeat; 
+    background-position: 0px 0px; 
+    min-height: 60px; 
+}
+
+li.head
+{
+    padding-left: 0px;
+    padding: 5px;
+    min-height: 16px;
+}
+
+input
+{
+    padding:1px 0;
+}
+
+.key
+{
+    font-weight: bold;
+    font-family: sans-serif;
+}
+
+.bar
+{
+    text-align: left;
+    min-height: 20px;
+    padding: 2px;
+    background: #111;
+    border-top: 1px solid #333;
+    font-size: 14px;
+    color: #fff;
+    font-weight: 700;
+    position: relative; 
+    width: 100%;
+    z-index: 101!important;
+}
+
+.pretty
+{
+    font-family: 'Proxima Nova Bold',"Calibri","Droid Sans","Helvetica Neue","Helvetica","Arial",sans-serif;
+}
+
+.from
+{
+    font-weight: bold;
+}
+
+.options 
+{
+    position: absolute;
+    right: 0px;
+}
+
+.panel
+{
+    padding: 1px; 
+    margin: 1px;
+}
+
+.button 
+{
+    padding: 10px;
+    margin-right: 10px;
+    background-color: #dcdcdc;
+    border: 1px solid #666;
+    color: #000;
+    text-decoration: none;
+}
+
+.when
+{
+    font-size: 70%;
+    color: #909090;
+    padding: 10px;
+}
+
+.container 
+{
+    margin: 5px auto;
+    position: relative;
+    word-wrap: break-word;
+}
+
+.private
+{
+    color: #000;
+}
+
+.chat
+{
+    color: #000;
+}
+
+.server
+{
+    color: #0000ff;
+}
+
+.info
+{
+    font-size: 66%;
+    display: none;
+    margin: 5px;
+}
+
+input.input-box
+{ 
+    font-size: 18px;
+    width: 100%; 
+    height: 32px; 
+    border: 1px solid #999999; 
+    padding: 0px; 
+    background: #fff; 
+    color: #000;
+}

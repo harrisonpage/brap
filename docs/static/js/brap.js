@@ -1,4 +1,12 @@
+/*
+ * Courtesy of Google: Smoosh key/value pairs sent in URL into qs object
+ */
+
 var qs=function(e){if(e=="")return{};var t={};for(var n=0;n<e.length;++n){var r=e[n].split("=");if(r.length!=2)continue;t[r[0]]=decodeURIComponent(r[1].replace(/\+/g," "))}return t}(window.location.search.substr(1).split("&"))
+
+/*
+ * Pretty-print date/time 
+ */
 
 Date.prototype.stdTimezoneOffset = function() 
 {
@@ -12,10 +20,18 @@ Date.prototype.dst = function()
     return this.getTimezoneOffset() < this.stdTimezoneOffset();
 }
 
+/*
+ * Values fetched from config.json
+ */
+
 var aliases = {};
 var icons = {};
 var deref, lat, lon, loc;
 var nightmode = false;
+
+/*
+ * Escape strings
+ */
 
 var entities = 
 {
@@ -39,6 +55,10 @@ function escaped (string)
     );
 }
 
+/*
+ * Generate link with optional deferer service 
+ */
+
 function link (url, label)
 {
     if (deref == undefined)
@@ -47,6 +67,10 @@ function link (url, label)
     }
     return "<a target='_blank' href='" + deref + escaped(url) + "'>" + escaped(label) + "</a>";
 }
+
+/*
+ * Apply markup to chatline: clickable links/hashtags
+ */
 
 function render_line (body)
 {
@@ -74,6 +98,10 @@ function render_line (body)
     return list;
 }
 
+/*
+ * Draw username + chatline + timestamp
+ */
+
 function decorate_line (when, from, line)
 {
     var whom = from;
@@ -97,13 +125,22 @@ function decorate_line (when, from, line)
             "</li>";
     }
 
-    return "<li><span class='msg chat'>&lt;" + from + "&gt;</span>" + " " + line + " " + "<span class='when options'>" + when + "</span></li>";
+    return "<li>" + 
+        "<span class='msg chat'>&lt;" + from + "&gt;</span>" + 
+        " " + 
+        line + 
+        " " + 
+        "<span class='when options'>" + when + "</span></li>";
 }
 
 function decorate_server_message (line)
 {
     return decorate_line ('', '_default', line);
 }
+
+/*
+ * Pretty-print date/time
+ */
 
 function prettyprint_date (date)
 {
@@ -124,6 +161,10 @@ function _prettyprint_date (date, flag)
     return flag ? chunks[4] : ds;
 }
 
+/*
+ * Apply formatting to chatline
+ */
+
 function process_chatline (v, i)
 {
     var when = prettyprint_time (v['date']);
@@ -138,6 +179,10 @@ function process_chatline (v, i)
     }
     return msg;
 }
+
+/*
+ * Defaults for various devices
+ */
 
 var limits = 
 {
@@ -156,6 +201,10 @@ function getDefaultLimit()
 
 var max = qs.hasOwnProperty('limit') ? qs['limit'] : getDefaultLimit();
 
+/*
+ * Change favicon as per config.json
+ */
+
 function changeFavIcon (url)
 {
     if ($("#favicon").length)
@@ -168,8 +217,16 @@ function changeFavIcon (url)
     }
 }
 
-function setup (config)
+/*
+ * Fired when /config.json is loaded 
+ */
+
+function onConfigLoaded (config)
 {
+    /*
+     * Change markup based on config values
+     */
+
     if (config.hasOwnProperty('title'))
     {
         document.title = config['title'];
@@ -200,60 +257,101 @@ function setup (config)
         deref = config['deref'];
     }
 
-    startup();
-}
-
-function startup()
-{
+    /*
+     * Get chatlines
+     */
     $.ajax
     (
         {
             url: '/get',
-            success: function(_data) 
-            {
-                {
-                    var data = jQuery.parseJSON (_data);
-                    var idiots = Object.keys(data['state']['whom']).join (", ");
-
-                    var duh = $.map
-                    (
-                        data['msgs'],
-                        process_chatline
-                    );
-
-                    while (duh.length > max)
-                    {
-                        duh.shift();
-                    }
-
-                    $('#bar').html (idiots);
-                    $('.console').append
-                    (
-                        "<ul>" + 
-                        duh.join ("")  + 
-                        "</ul>"
-                    );
-
-                    $('#state').html 
-                    (
-                        pair ("Created", prettyprint_date (data['state']['create_date'])) + "<br/>" + 
-                        pair ("Updated", prettyprint_date (data['state']['update_date'])) + "<br/>" + 
-                        pair ("Nick", escaped (data['options']['nick'])) + "<br/>" + 
-                        pair ("JID", escaped (data['options']['jid'])) + "<br/>" + 
-                        pair ("Room", escaped (data['options']['room'])) + "<br/>" + 
-                        pair ("Subject", escaped (data['state']['subject'])) + "<br/>" + 
-                        pair ("Chatlines", escaped (data['chatlines']))
-                    );
-                }
-            }
+            dataType: 'json',
+            success: onChatLoaded
         }
     );
 }
+
+function onChatLoaded (data)
+{
+    /*
+     * Hmm: Something bad happened
+     */
+
+    if (! data.hasOwnProperty('state')) 
+    {
+        console.log ("Bogus reply from server");
+        return;
+    }
+
+    /*
+     * Extract user list from payload
+     */
+
+    var idiots = Object.keys(data['state']['whom']).join (", ");
+
+    /*
+     * Iterate over chatlines, apply formatting
+     */
+
+    var chatlines = $.map
+    (
+        data['msgs'],
+        process_chatline
+    );
+
+    /*
+     * Remove excess chatlines
+     */
+
+    while (chatlines.length > max)
+    {
+        chatlines.shift();
+    }
+
+    /*
+     * Update user list UI
+     */
+
+    $('#bar').html (idiots);
+
+    /*
+     * Update chatlines 
+     */
+
+    $('.console').html
+    (
+        "<ul>" + 
+        chatlines.join ("")  + 
+        "</ul>"
+    );
+
+    /*
+     * Debug info
+     */
+
+    $('#state').html 
+    (
+        pair ("Created", prettyprint_date (data['state']['create_date'])) + "<br/>" + 
+        pair ("Updated", prettyprint_date (data['state']['update_date'])) + "<br/>" + 
+        pair ("Nick", escaped (data['options']['nick'])) + "<br/>" + 
+        pair ("JID", escaped (data['options']['jid'])) + "<br/>" + 
+        pair ("Room", escaped (data['options']['room'])) + "<br/>" + 
+        pair ("Subject", escaped (data['state']['subject'])) + "<br/>" + 
+        pair ("Chatlines", escaped (data['chatlines']))
+    );
+}
+
+/*
+ * Pretty-print key/value pairs
+ */
 
 function pair (key, value)
 {
     return "<span class='key'>" + key + ":" + "</span>" + "&nbsp;" + value;
 }
+
+/*
+ * Google returns street address
+ */
 
 function onAddressUpdate (data, lat, lon)
 {
@@ -270,6 +368,10 @@ function onAddressUpdate (data, lat, lon)
         }
     );
 }
+
+/*
+ * Browser makes lat/lon available
+ */
 
 function onPositionUpdate (position)
 {
@@ -290,6 +392,10 @@ function onPositionUpdate (position)
     );
 }
 
+/*
+ * Toggle Info Pane
+ */
+
 function showInfo()
 {
     if ($('#info').is(":visible"))
@@ -307,6 +413,10 @@ function showInfo()
     $('#info').show();
 }
 
+/*
+ * Toggle Day/Night Mode
+ */
+
 function toggleMode()
 {
     $("body").removeClass (nightmode ? 'night' : 'day');
@@ -315,7 +425,6 @@ function toggleMode()
     $("body").addClass (nightmode ? 'night' : 'day');
     $('a').addClass (nightmode ? 'night' : 'day');
     $("#modeLabel").html (nightmode ? "Day" : "Night");
-    $("#line").focus();
     if (nightmode)
     {
         $("#line").css ({'background-color': '#111', 'color': '#fff'});
@@ -331,42 +440,46 @@ $(document).ready
 (
     function() 
     {
+        /*
+         * Day/Night: Change colors, button label
+         */
+
         nightmode = $.cookie ("nightmode") == '1';
         $("body").addClass (nightmode ? 'night' : 'day');
         $("a").addClass (nightmode ? 'night' : 'day');
-        var modeLabel = nightmode ? "Day" : "Night"; 
+        $("#modeLabel").html (nightmode ? "Day" : "Night");
+
+        /*
+         * Debug stuff
+         */
+
         $('#device').html 
         (
             pair ("Dimensions", screen.availWidth + "x" + screen.availHeight)
         );
-        $("#bar").html ("Loading...");
-        $("#line").focus();
-        $("#line").select();
-        $('#buttons').append ('<a class="button" href="javascript:document.chat.submit()">Go</a>');
-        $('#buttons').append ('<a class="button" href="/">Refresh</a>');
-        $('#buttons').append ('<a class="button" href="javascript:showInfo()">Info</a>');
-        $('#buttons').append ('<a class="button" href="javascript:toggleMode()"><span id="modeLabel">' + modeLabel + '</span></a>');
 
-        if (! qs.hasOwnProperty('limit'))
+        $("#bar").html ("Loading...");
+
+        /*
+         * More/Less button
+         */
+
+        if (qs.hasOwnProperty('limit'))
         {
-            $('#buttons').append ('<a class="button" href="/?limit=50">More</a>');
+            $("#moreButton").attr("href", "/");
+            $("#moreLabel").html ("Less");
         }
-        else
-        {
-            $('#buttons').append ('<a class="button" href="/">Less</a>');
-        }
+
+        /*
+         * Kick off UI callbacks
+         */
 
         $.ajax
         (
             {
                 url: '/config',
-                success: function(_data)
-                {
-                    {
-                        var config = jQuery.parseJSON (_data);
-                        setup (config);
-                    }
-                }
+                dataType: 'json',
+                success: onConfigLoaded
             }
         );
     }

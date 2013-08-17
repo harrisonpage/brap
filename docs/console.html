@@ -7,35 +7,45 @@
 <link rel="apple-touch-icon" href="/static/icons/system.png"/>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
 <script src="/static/js/jquery.cookie.js"></script>
-<script src="/static/js/brap.js"></script>
-<style type="text/css" media="screen">@import "/static/css/brap.css";</style>
+<script src="/static/js/brap.js?23"></script>
+<style type="text/css" media="screen">@import "/static/css/brap.css?23";</style>
 <title></title>
 </head>
 <body>
-    <div class="bar pretty" id="bar">
+    <div id="tabs" class="tabs">
+        <div id="tab_chat" class="tab"><img class="tab_button" id="tab_chat_img" src="/static/ui/daychat.png"></div>
+        <div id="tab_users" class="tab"><img class="tab_button" id="tab_users_img" src="/static/ui/dayusers.png"></div>
+        <div id="tab_images" class="tab"><img class="tab_button" id="tab_images_img" src="/static/ui/dayimages.png"></div>
+        <div id="tab_night" class="tab"><img class="tab_button" id="tab_night_img" src="/static/ui/daynight.png"></div>
+        <div id="tab_refresh" class="tab"><img class="tab_button" id="tab_refresh_img" src="/static/ui/dayrefresh.png"></div>
+        <div id="tab_settings" class="tab"><img class="tab_settings" id="tab_settings_img" src="/static/ui/daysettings.png"></div>
     </div>
     <div class="container">
-        <div class="console">
+        <div class="pane container_chat" id="container_chat">
+            <div class="console">
+            </div>
+            <div class="panel">
+                <form id="chat" name="chat" action="/put" method="post">
+                    <input class="input-box" size=32 id="line" name="line"/>
+                    <input type="hidden" name="lat" value="0"/>
+                    <input type="hidden" name="lon" value="0"/>
+                    <input type="hidden" name="loc" value=""/>
+                </form>
+            </div>
+        </div>  
+        <div class="pane container_users container_hiding" id="container_users">
+        </div>
+        <div class="pane container_images container_hiding" id="container_images">
+            <div class="panel" id="image_viewer">
+            </div>
+        </div>
+        <div class="pretty pane container_settings container_hiding" id="container_settings">
+            <div class="about">
+                <span class="key">GitHub:</span>&nbsp;<a href="https://github.com/harrisonpage/brap">brap 1.0.0</a><br/>
+                <span id="state"></span><br/>
+                <span id="geo"></span>
+            </div>
         </div>
     </div>  
-    <div class="panel">
-        <form id="chat" name="chat" action="/put" method="post">
-            <input class="input-box" size=32 id="line" name="line"/>
-            <input type="hidden" name="lat" value="0"/>
-            <input type="hidden" name="lon" value="0"/>
-            <input type="hidden" name="loc" value=""/>
-        </form>
-        <br/>
-        <div id="buttons">
-        <a class="button" onclick="showInfo()">Info</a>
-        <a class="button" onclick="toggleMode()"><span id="modeLabel"></span></a>
-        <a id="moreButton" class="button" href="/?limit=50"><span id="moreLabel">More</span></a>
-        </div>
-    </div>
-    <div class="info" id="info">
-        <span id="state"></span><br/>
-        <span id="device"></span><br/>
-        <span id="geo"></span>
-    </div>
 </body>
 </html>

@@ -17,6 +17,7 @@ Features
 - Track current location (lon, lat)
 - Track street address via maps.googleapis.com
 - Use a 3rd party service to remove referrals from links
+- Tracks image URLs seen in chat
 
 Config File
 ===========
@@ -71,12 +72,13 @@ Under The Hood
 
 - JavaScript talks to Python via HTTP/JSON
 - Always-on Python bot connects to Jabber server
-- Type !help in channel to show current location
+- Type !help in channel to share current location
 
 Icons
 =====
 
-Courtesy of PixelKit: http://pixelkit.com/kits/flat-icon-set
+- PixelKit http://pixelkit.com/kits/flat-icon-set
+- FlatIcons http://flaticons.net/
 
 TODO
 ====

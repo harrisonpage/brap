@@ -5,22 +5,6 @@
 var qs=function(e){if(e=="")return{};var t={};for(var n=0;n<e.length;++n){var r=e[n].split("=");if(r.length!=2)continue;t[r[0]]=decodeURIComponent(r[1].replace(/\+/g," "))}return t}(window.location.search.substr(1).split("&"))
 
 /*
- * Pretty-print date/time 
- */
-
-Date.prototype.stdTimezoneOffset = function() 
-{
-    var jan = new Date(this.getFullYear(), 0, 1);
-    var jul = new Date(this.getFullYear(), 6, 1);
-    return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
-}
-
-Date.prototype.dst = function() 
-{
-    return this.getTimezoneOffset() < this.stdTimezoneOffset();
-}
-
-/*
  * Values fetched from config.json
  */
 
@@ -28,6 +12,8 @@ var aliases = {};
 var icons = {};
 var deref, lat, lon, loc;
 var nightmode = false;
+var imagecount = 0;
+var imageQueue = [];
 
 /*
  * Escape strings
@@ -55,17 +41,28 @@ function escaped (string)
     );
 }
 
+function getNextImageID()
+{
+    return imagecount++;
+}
+
 /*
  * Generate link with optional deferer service 
  */
 
 function link (url, label)
 {
-    if (deref == undefined)
+    var link = (deref == undefined ? "" : deref) + url;
+    var buf = "<a target='_blank' href='" + escaped(link) + "'>" + escaped(label) + "</a>";
+
+    if (url.match(/\.(gif|jpg|jpeg|png)$/) != null)
     {
-        return "<a target='_blank' href='" + escaped(url) + "'>" + escaped(label) + "</a>";
+        var id = getNextImageID();
+        buf += "<div id='img" + id + "' style='display:none'></div>";
+        imageQueue.push ( { id: id, url: url, link: link } );
     }
-    return "<a target='_blank' href='" + deref + escaped(url) + "'>" + escaped(label) + "</a>";
+
+    return buf;
 }
 
 /*
@@ -141,6 +138,18 @@ function decorate_server_message (line)
 /*
  * Pretty-print date/time
  */
+
+Date.prototype.stdTimezoneOffset = function() 
+{
+    var jan = new Date(this.getFullYear(), 0, 1);
+    var jul = new Date(this.getFullYear(), 6, 1);
+    return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+}
+
+Date.prototype.dst = function() 
+{
+    return this.getTimezoneOffset() < this.stdTimezoneOffset();
+}
 
 function prettyprint_date (date)
 {
@@ -268,6 +277,87 @@ function onConfigLoaded (config)
             success: onChatLoaded
         }
     );
+
+    /*
+     * UI callbacks
+     */
+
+    $("#tab_chat").click ( function() { onChatButtonClicked ('container_chat') } );
+    $("#tab_users").click ( function() { onUsersButtonClicked ('container_users') } );
+    $("#tab_images").click ( function() { onImagesButtonClicked ('container_images') } );
+    $("#tab_night").click ( function() { toggleNightMode() } );
+    $("#tab_settings").click ( function() { onSettingsButtonClicked ('container_settings') } );
+    $("#tab_refresh").click ( function() { document.location = "/" } );
+}
+
+/*
+ * UI actions
+ */
+
+function onChatButtonClicked (pane)
+{
+    console.log ("onChatButtonClicked()");
+    hidePanels (pane);
+}
+
+function onUsersButtonClicked (pane)
+{
+    console.log ("onUsersButtonClicked()");
+    hidePanels (pane);
+}
+
+function onImagesButtonClicked (pane)
+{
+    console.log ("onImagesButtonClicked()");
+    hidePanels (pane);
+    $("#imageviewer").html ("");
+
+    if (imageQueue.length)
+    {
+        var id, url, link;
+        var img = [];
+        for (var i = 0; i < imageQueue.length; i++)
+        {
+            id = imageQueue[i]['id'];
+            url = imageQueue[i]['url'];
+            link = imageQueue[i]['link'];
+            img[i] = new Image();
+            img[i].border = 0;
+            img[i].width = 120;
+            img[i].vspace = 4;
+            img[i].hspace = 4;
+            img[i].src = url;
+            $("#image_viewer").append ("<a target='_blank' href='" + link + "'>");
+            $("#image_viewer").append (img[i]); 
+            $("#image_viewer").append ("</a><br clear='left'/>");
+        }
+    }
+    else
+    {
+        $("#imageviewer").html ("No images");
+    }
+}
+
+function onRefreshButtonClicked (pane)
+{
+    toggleNightMode();
+}
+
+function onSettingsButtonClicked (pane)
+{
+    hidePanels (pane);
+    showInfo();
+}
+
+function hidePanels (pane)
+{
+    $('.pane').each
+    (
+        function (i, p)
+        {
+            p.id == pane ? $(p).show() : $(p).hide();
+        }
+    );
 }
 
 function onChatLoaded (data)
@@ -281,12 +371,6 @@ function onChatLoaded (data)
         console.log ("Bogus reply from server");
         return;
     }
-
-    /*
-     * Extract user list from payload
-     */
-
-    var idiots = Object.keys(data['state']['whom']).join (", ");
 
     /*
      * Iterate over chatlines, apply formatting
@@ -311,7 +395,7 @@ function onChatLoaded (data)
      * Update user list UI
      */
 
-    $('#bar').html (idiots);
+    $('#container_users').html ("<ul>" + getUserList (data['state']['whom']) + "</ul>");
 
     /*
      * Update chatlines 
@@ -330,14 +414,42 @@ function onChatLoaded (data)
 
     $('#state').html 
     (
-        pair ("Created", prettyprint_date (data['state']['create_date'])) + "<br/>" + 
+        pair ("Connected", prettyprint_date (data['state']['create_date'])) + "<br/>" + 
         pair ("Updated", prettyprint_date (data['state']['update_date'])) + "<br/>" + 
-        pair ("Nick", escaped (data['options']['nick'])) + "<br/>" + 
-        pair ("JID", escaped (data['options']['jid'])) + "<br/>" + 
         pair ("Room", escaped (data['options']['room'])) + "<br/>" + 
         pair ("Subject", escaped (data['state']['subject'])) + "<br/>" + 
+        pair ("Nick", escaped (data['options']['nick'])) + "<br/>" + 
+        pair ("JID", escaped (data['options']['jid'])) + "<br/>" + 
+        pair ("Dimensions", screen.availWidth + "x" + screen.availHeight) + "<br/>" + 
         pair ("Chatlines", escaped (data['chatlines']))
     );
+}
+
+/*
+ * Generate users pane
+ */
+
+function getUserList (idiots)
+{
+    var users = [];
+    for (var idiot in idiots)
+    {
+        users.push (idiot);
+    }
+    users.sort (sort);
+    var buf = "";
+    for (var i = 0; i < users.length; i++)
+    {
+        buf += decorate_line ('', users[i], '');
+    }
+    return buf;
+}
+
+function sort (a, b)
+{
+  var c = a.toLowerCase();
+  var d = b.toLowerCase(); 
+  return ((c < d) ? -1 : ((c > d) ? 1 : 0));
 }
 
 /*
@@ -398,33 +510,25 @@ function onPositionUpdate (position)
 
 function showInfo()
 {
-    if ($('#info').is(":visible"))
-    {
-        $('#info').hide();
-        return;
-    }
-
     $('#geo').html 
     (
-        "<span class='key'>Lat/Lon:</span>&nbsp;" + lat + "," + lon + "<br/>" + 
-        "<span class='key'>Location:</span>&nbsp;" + loc
+        pair ("Lat/Lon", lat + "," + lon) + "<br/>" + 
+        pair ("Address", loc)
     );
-
-    $('#info').show();
 }
 
 /*
  * Toggle Day/Night Mode
  */
 
-function toggleMode()
+function toggleNightMode()
 {
-    $("body").removeClass (nightmode ? 'night' : 'day');
-    $('a').removeClass (nightmode ? 'night' : 'day');
+    $('body').removeClass (getMode());
+    $('a').removeClass (getMode());
     nightmode = ! nightmode;
-    $("body").addClass (nightmode ? 'night' : 'day');
-    $('a').addClass (nightmode ? 'night' : 'day');
-    $("#modeLabel").html (nightmode ? "Day" : "Night");
+    $('body').addClass (getMode());
+    $('a').addClass (getMode());
+
     if (nightmode)
     {
         $("#line").css ({'background-color': '#111', 'color': '#fff'});
@@ -434,6 +538,11 @@ function toggleMode()
         $("#line").css ({'background-color': '#fff', 'color': '#000'});
     }
     $.cookie("nightmode", nightmode ? 1 : 0);
+}
+
+function getMode()
+{
+    return nightmode ? 'night' : 'day';
 }
 
 $(document).ready
@@ -450,17 +559,6 @@ $(document).ready
         $("#modeLabel").html (nightmode ? "Day" : "Night");
 
         /*
-         * Debug stuff
-         */
-
-        $('#device').html 
-        (
-            pair ("Dimensions", screen.availWidth + "x" + screen.availHeight)
-        );
-
-        $("#bar").html ("Loading...");
-
-        /*
          * More/Less button
          */
 
@@ -469,6 +567,17 @@ $(document).ready
             $("#moreButton").attr("href", "/");
             $("#moreLabel").html ("Less");
         }
+    
+        var tabCount = $(".tab").size() 
+        var tabWidth = Math.floor (($("#tabs").width() / tabCount) - (tabCount*2));
+        $('.tab').each
+        (
+            function (i, tab)
+            {
+                $(tab).css ("width", tabWidth + "px");
+                console.log ("availWidth=" + screen.availWidth + " tabCount=" + tabCount + " tabWidth=" + tabWidth + " tabs.width=" + $("#tabs").width());
+            }
+        );
 
         /*
          * Kick off UI callbacks

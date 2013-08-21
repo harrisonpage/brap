@@ -147,11 +147,12 @@ input
 input.input-box
 { 
     font-size: 18px;
-    width: 100%; 
+    width: 99%;
     height: 32px; 
     border: 1px solid #999999; 
     padding: 0px; 
-    background: #fff; 
+    margin: 5px;
+    background-color: #fff; 
     color: #000;
 }
 

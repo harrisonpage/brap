@@ -16,7 +16,6 @@ var aliases = {};
 var icons = {};
 var deref, lat, lon, loc;
 var nightmode = false;
-var imagecount = 0;
 var imageQueue = [];
 
 /*
@@ -45,11 +44,6 @@ function escaped (string)
     );
 }
 
-function getNextImageID()
-{
-    return imagecount++;
-}
-
 /*
  * Generate link with optional deferer service 
  */
@@ -58,14 +52,6 @@ function link (url, label)
 {
     var link = (deref == undefined ? "" : deref) + url;
     var buf = "<a rel='nofollow' target='_blank' href='" + escaped(link) + "'>" + escaped(label) + "</a>";
-
-    if (url.match(/\.(gif|jpg|jpeg|png)$/) != null)
-    {
-        var id = getNextImageID();
-        buf += "<div id='img" + id + "' style='display:none'></div>";
-        imageQueue.push ( { id: id, url: url, link: link } );
-    }
-
     return buf;
 }
 
@@ -85,6 +71,12 @@ function render_line (body)
         {
             // clickable links
             list.push (link (word, word));
+
+            // collect images seen
+            if (word.match(/\.(gif|jpg|jpeg|png)$/) != null)
+            {
+                imageQueue.push (word);
+            }
         }
         else if (word.substr (0, 1) == '#')
         {
@@ -323,14 +315,14 @@ function onUsersButtonClicked (pane)
 function onImagesButtonClicked (pane)
 {
     hidePanels (pane);
-    var buf = "";
 
     if (imageQueue.length)
     {
+        var buf = "";
         for (var i = 0; i < imageQueue.length; i++)
         {
-            buf += "<a rel='nofollow' target='_blank' href='" + imageQueue[i]['link'] + "'>";
-            buf += "<img src='" + imageQueue[i]['url'] + "' border=0 width=120 vspace=4 hspace=4/>";
+            buf += "<a rel='nofollow' target='_blank' href='" + imageQueue[i] + "'>";
+            buf += "<img src='" + imageQueue[i] + "' border=0 width=120 vspace=4 hspace=4/>";
             buf += "</a>";
         }
         $("#image_count").html (": " + imageQueue.length);
@@ -418,6 +410,7 @@ function onURLsLoaded (data)
     if (urls.length)
     {
         $("#link_viewer").html ("<ul>" + urls.reverse().join ("") + "</ul>");
+        $("#link_count").html (": " + urls.length);
     }
     else
     {
@@ -441,13 +434,14 @@ function onPrivateMessagesLoaded (data)
             (
                 prettyPrintDateTime (msg['date']),
                 msg['from'],
-                msg['body']
+                render_line (msg['body']).join (" ")
             )
         );
     }
     if (msgs.length)
     {
         $("#msg_viewer").html ("<ul>" + msgs.join ("") + "</ul>");
+        $("#msg_count").html (": " + msgs.length);
     }
     else
     {
@@ -470,6 +464,12 @@ function onChatLoaded (data)
         console.log ("Bogus reply from server");
         return;
     }
+    
+    /*
+     * Reset image queue
+     */
+
+    imageQueue = [];
 
     /*
      * Iterate over chatlines, apply formatting
@@ -494,7 +494,9 @@ function onChatLoaded (data)
      * Update user list UI
      */
 
-    $('#user_viewer').html ("<ul>" + getUserList (data['state']['whom']) + "</ul>");
+    var users = getUserList (data['state']['whom']);
+    $('#user_viewer').html ("<ul>" + users.join ("") + "</ul>");
+    $('#user_count').html (": " + users.length);
 
     /*
      * Update chatlines 
@@ -545,12 +547,12 @@ function getUserList (idiots)
         users.push (idiot);
     }
     users.sort (sort);
-    var buf = "";
+    var decorated = [];
     for (var i = 0; i < users.length; i++)
     {
-        buf += decorate_line ('', users[i], '');
+        decorated.push (decorate_line ('', users[i], ''));
     }
-    return buf;
+    return decorated;
 }
 
 function sort (a, b)

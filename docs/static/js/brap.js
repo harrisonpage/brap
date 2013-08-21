@@ -529,6 +529,15 @@ function onChatLoaded (data)
         pair ("Dimensions", screen.availWidth + "x" + screen.availHeight) + "<br/>" + 
         pair ("Chatlines", escaped (data['chatlines']))
     );
+
+    /*
+     * Focus text input field for non-iOS, otherwise device keyboard pops up
+     */
+
+    if (navigator.userAgent.indexOf ('iPhone') == -1)
+    {
+        $("#line").focus();
+    }
 }
 
 /*

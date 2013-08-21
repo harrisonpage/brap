@@ -1,4 +1,8 @@
 /*
+ * https://github.com/harrisonpage/brap
+ */
+
+/*
  * Courtesy of Google: Smoosh key/value pairs sent in URL into qs object
  */
 
@@ -151,23 +155,33 @@ Date.prototype.dst = function()
     return this.getTimezoneOffset() < this.stdTimezoneOffset();
 }
 
-function prettyprint_date (date)
+// format: Tue Aug 20 2013 16:31:02 GMT-0700 (PDT)
+function prettyPrintDate (date)
 {
-    return _prettyprint_date (date, false);
+    return getDate(date);
 }
 
-function prettyprint_time (date)
+// format: Aug 20 16:31:02
+function prettyPrintDateTime (date)
 {
-    return _prettyprint_date (date, true);
+    var ds = getDate(date);
+    var chunks = ds.split (" ");
+    return chunks[1] + " " + chunks[2] + " " + chunks[4];
 }
 
-function _prettyprint_date (date, flag)
+// format: 16:31:02
+function prettyPrintTime (date)
+{
+    var ds = getDate(date);
+    var chunks = ds.split (" ");
+    return chunks[4];
+}
+
+function getDate(date) 
 {
     var d = new Date(date*1000);
     d.setTime(d.valueOf() - (60000 * d.getTimezoneOffset()) - (d.dst() ? 60000 * 60 : 0));
-    var ds = d.toString();
-    var chunks = ds.split (" ");
-    return flag ? chunks[4] : ds;
+    return d.toString();
 }
 
 /*
@@ -176,7 +190,7 @@ function _prettyprint_date (date, flag)
 
 function process_chatline (v, i)
 {
-    var when = prettyprint_time (v['date']);
+    var when = prettyPrintTime (v['date']);
     var list = render_line (v['body']);
     var msg = v['from'] == '' 
         ? decorate_server_message (v['body'])
@@ -284,7 +298,9 @@ function onConfigLoaded (config)
 
     $("#tab_chat").click ( function() { onChatButtonClicked ('container_chat') } );
     $("#tab_users").click ( function() { onUsersButtonClicked ('container_users') } );
+    $("#tab_msg").click ( function() { onMessageButtonClicked ('container_msg') } );
     $("#tab_images").click ( function() { onImagesButtonClicked ('container_images') } );
+    $("#tab_links").click ( function() { onLinksButtonClicked ('container_links') } );
     $("#tab_night").click ( function() { toggleNightMode() } );
     $("#tab_settings").click ( function() { onSettingsButtonClicked ('container_settings') } );
     $("#tab_refresh").click ( function() { document.location = "/" } );
@@ -296,21 +312,18 @@ function onConfigLoaded (config)
 
 function onChatButtonClicked (pane)
 {
-    console.log ("onChatButtonClicked()");
     hidePanels (pane);
 }
 
 function onUsersButtonClicked (pane)
 {
-    console.log ("onUsersButtonClicked()");
     hidePanels (pane);
 }
 
 function onImagesButtonClicked (pane)
 {
-    console.log ("onImagesButtonClicked()");
     hidePanels (pane);
-    $("#imageviewer").html ("");
+    $("#image_viewer").html ("");
 
     if (imageQueue.length)
     {
@@ -327,15 +340,41 @@ function onImagesButtonClicked (pane)
             img[i].vspace = 4;
             img[i].hspace = 4;
             img[i].src = url;
-            $("#image_viewer").append ("<a target='_blank' href='" + link + "'>");
-            $("#image_viewer").append (img[i]); 
-            $("#image_viewer").append ("</a><br clear='left'/>");
+            $("#image_viewer").append ("<a target='_blank' href='" + link + "'>" + img[i] + "</a><br clear='left'/>");
         }
     }
     else
     {
-        $("#imageviewer").html ("No images");
+        $("#image_viewer").html ("No images");
     }
+}
+
+function onMessageButtonClicked (pane)
+{
+    hidePanels (pane);
+    $("#msg_viewer").html ("Loading...");
+    $.ajax
+    (
+        {
+            url: '/priv',
+            dataType: 'json',
+            success: onPrivateMessagesLoaded
+        }
+    );
+}
+
+function onLinksButtonClicked (pane)
+{
+    hidePanels (pane);
+    $("#link_viewer").html ("Loading...");
+    $.ajax
+    (
+        {
+            url: '/urls',
+            dataType: 'json',
+            success: onURLsLoaded
+        }
+    );
 }
 
 function onRefreshButtonClicked (pane)
@@ -349,6 +388,10 @@ function onSettingsButtonClicked (pane)
     showInfo();
 }
 
+/*
+ * Helper: Hide all panels except for the one specified in pane
+ */
+
 function hidePanels (pane)
 {
     $('.pane').each
@@ -359,6 +402,69 @@ function hidePanels (pane)
         }
     );
 }
+
+/*
+ * Finished loading list of URLs from server
+ */
+
+function onURLsLoaded (data)
+{
+    var urls = [];
+    for (var i in data)
+    {
+        urls.push 
+        (
+            decorate_line 
+            (
+                prettyPrintDateTime (data[i]['date']), 
+                data[i]['from'], 
+                data[i]['url']
+            )
+        );
+    }
+    if (urls.length)
+    {
+        $("#link_viewer").html ("<ul>" + urls.reverse().join ("") + "</ul>");
+    }
+    else
+    {
+        $("#link_viewer").html ("No URLs");
+    }
+}
+
+/*
+ * Finished loading private messages/mentions from server
+ */
+
+function onPrivateMessagesLoaded (data)
+{
+    var msg, msgs = [];
+    for (var i in data['privmsgs'])
+    {
+        msg = data['privmsgs'][i];
+        msgs.push
+        (
+            decorate_line
+            (
+                prettyPrintDateTime (msg['date']),
+                msg['from'],
+                msg['body']
+            )
+        );
+    }
+    if (msgs.length)
+    {
+        $("#msg_viewer").html ("<ul>" + msgs.join ("") + "</ul>");
+    }
+    else
+    {
+        $("#msg_viewer").html ("No messages or mentions");
+    }
+}
+
+/*
+ * Finished loading chat lines from server
+ */
 
 function onChatLoaded (data)
 {
@@ -378,12 +484,12 @@ function onChatLoaded (data)
 
     var chatlines = $.map
     (
-        data['msgs'],
+        data['pubmsgs'],
         process_chatline
     );
 
     /*
-     * Remove excess chatlines
+     * Remove excess
      */
 
     while (chatlines.length > max)
@@ -395,7 +501,7 @@ function onChatLoaded (data)
      * Update user list UI
      */
 
-    $('#container_users').html ("<ul>" + getUserList (data['state']['whom']) + "</ul>");
+    $('#user_viewer').html ("<ul>" + getUserList (data['state']['whom']) + "</ul>");
 
     /*
      * Update chatlines 
@@ -414,10 +520,10 @@ function onChatLoaded (data)
 
     $('#state').html 
     (
-        pair ("Connected", prettyprint_date (data['state']['create_date'])) + "<br/>" + 
-        pair ("Updated", prettyprint_date (data['state']['update_date'])) + "<br/>" + 
+        pair ("Connected", prettyPrintDate (data['state']['create_date'])) + "<br/>" + 
+        pair ("Updated", prettyPrintDate (data['state']['update_date'])) + "<br/>" + 
         pair ("Room", escaped (data['options']['room'])) + "<br/>" + 
-        pair ("Subject", escaped (data['state']['subject'])) + "<br/>" + 
+        pair ("Subject", (data['state']['subject'] == undefined ? "-none-" : escaped (data['state']['subject']))) + "<br/>" + 
         pair ("Nick", escaped (data['options']['nick'])) + "<br/>" + 
         pair ("JID", escaped (data['options']['jid'])) + "<br/>" + 
         pair ("Dimensions", screen.availWidth + "x" + screen.availHeight) + "<br/>" + 
@@ -531,7 +637,7 @@ function toggleNightMode()
 
     if (nightmode)
     {
-        $("#line").css ({'background-color': '#111', 'color': '#fff'});
+        $("#line").css ({'background-color': '#000', 'color': '#fff'});
     }
     else
     {
@@ -575,7 +681,6 @@ $(document).ready
             function (i, tab)
             {
                 $(tab).css ("width", tabWidth + "px");
-                console.log ("availWidth=" + screen.availWidth + " tabCount=" + tabCount + " tabWidth=" + tabWidth + " tabs.width=" + $("#tabs").width());
             }
         );
 

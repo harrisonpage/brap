@@ -1,23 +1,24 @@
 Brap
 ====
 
-An XMPP/WWW bridge in Python/JavaScript. 
+An XMPP/WWW bridge in Python/JavaScript. Connect to a Jabber chat room from a 
+web page. 
 
 Features
 ========
 
 - Pleasant-looking HTML/CSS/JavaScript interface
 - Single-threaded Python server for backend
-- Password-protected web page (HTTP AUTH)
+- Password-protected web page via HTTP AUTH
 - Clickable links open in new browser window
 - Clickable hashtags open to twitter
+- 3rd party service to remove referrals from links can be specified
 - Night mode
 - Set a custom favicon.ico
 - Set custom icons per friend
 - Track current location (lon, lat)
 - Track street address via maps.googleapis.com
-- Use a 3rd party service to remove referrals from links
-- Tracks image URLs seen in chat
+- Tracks URLs and images seen in chat
 
 Config File
 ===========
@@ -57,7 +58,14 @@ Options:
 Minimal Example
 ===============
 
-    ./brap.py -d -u USERNAME -q -j JID -r CHANNEL -n NICK -x PASSWORD
+Start up brap (perhaps in a screen session):
+
+    ./brap.py -d -u USERNAME -q -j JID -r CHANNEL -n NICK -x PASSWORD -l 6502
+
+Open your browser to http://localhost:6502/ and login. For the username, use the 
+value you specified with -u. For the password, use the value you specified with 
+-p or were prompted for. This is different from the room password as specified 
+with -x.
 
 Ingredients
 ===========
@@ -71,8 +79,21 @@ Under The Hood
 ==============
 
 - JavaScript talks to Python via HTTP/JSON
-- Always-on Python bot connects to Jabber server
-- Type !help in channel to share current location
+- Always-on Python bot maintains connection to Jabber server
+
+GeoLocation Features
+====================
+
+Enabling this feature assumes you want to share your current location with other
+users. By default this is off. You can enable this by changing the value of
+geolocation in config.json to enabled. For each time you load the page, the lon/lat
+as reported by your browser will be stored on the server and, if available from
+Google, your street address. 
+
+Your browser may prompt you to enable these features repeatedly. This might get annoying. 
+
+Users can type !help in channel to show your current location: lon, lat and 
+street address if available.
 
 Icons
 =====
@@ -85,8 +106,9 @@ TODO
 
 - Specify arguments to deref URL e.g. http://whatever/?url=%%URL%% or something
 - Separate HTTP AUTH password from Jabber server password
-- Support for replying to private messages
+- Support for sending/receiving to private messages
 - Support for multiple rooms
+- Fetch user icons from Jabber server instead of config.json
 
 Author
 ======

@@ -1,9 +1,19 @@
+/*
+ * https://github.com/harrisonpage/brap
+ */
+
 body
 {
     font-family: courier;
     font-size: 105%;
     margin: 0;
     padding-bottom: 10px;
+}
+
+h1
+{
+    margin: .2em;
+    font-size: 1.25em;
 }
 
 .about

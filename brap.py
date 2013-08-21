@@ -10,6 +10,7 @@ http://sendapatch.se/projects/pylibmc/
 http://www.tornadoweb.org/
 http://kevinsayscode.tumblr.com/post/7362319243/easy-basic-http-authentication-with-tornado
 https://gist.github.com/paulosuzart/660185
+http://daringfireball.net/2010/07/improved_regex_for_matching_urls
 """
 
 import time
@@ -17,6 +18,7 @@ import datetime
 import sys
 import os
 import logging
+import re
 import getpass
 from optparse import OptionParser
 import sleekxmpp
@@ -64,7 +66,10 @@ class BotState:
         self.opts = opts
         self.state = {}
         self.chatlines = 0
-        self.msgs = collections.deque(maxlen=100)
+        self.pubmsgs = collections.deque(maxlen=100)
+        self.privmsgs = collections.deque(maxlen=100)
+        self.urls = collections.deque(maxlen=100)
+        self.pat = re.compile(ur'(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?\xab\xbb\u201c\u201d\u2018\u2019]))')
 
     def options(self):
         return { 'nick': self.opts.nick, 'room': self.opts.room, 'jid': self.opts.jid }
@@ -73,15 +78,26 @@ class BotState:
         self.state[key] = value
 
     def public(self, _from, body):
-        self.msgs.append({'type': 'public', 'from': _from, 'body': body, 'date': time.mktime(time.gmtime())})
+        self.pubmsgs.append({'type': 'public', 'from': _from, 'body': body, 'date': time.mktime(time.gmtime())})
+        urls = self.pat.findall(body)
+        for url in urls:
+            self.urls.append({'from': _from, 'url': url[0], 'date': time.mktime(time.gmtime())})
         self.chatlines += 1
+        if self.opts.user in body:
+            self.private (_from, body)
 
     def private(self, _from, body):
-        self.msgs.append({'type': 'private', 'from': str(_from), 'body': body, 'date': time.mktime(time.gmtime())})
+        self.privmsgs.append({'type': 'private', 'from': str(_from), 'body': body, 'date': time.mktime(time.gmtime())})
         self.chatlines += 1
 
-    def dump(self):
-        return json.dumps({'state': self.state, 'options': self.options(), 'chatlines': self.chatlines, 'msgs': list(self.msgs)})
+    def dumpPublicMessages(self):
+        return json.dumps({'state': self.state, 'options': self.options(), 'chatlines': self.chatlines, 'pubmsgs': list(self.pubmsgs)})
+    
+    def dumpPrivateMessages(self):
+        return json.dumps({'privmsgs': list(self.privmsgs)})
+
+    def dumpURLs(self):
+        return json.dumps(list(self.urls))
 
     def authorized(self, username, password):
         return username == self.opts.user and password == self.opts.password
@@ -140,7 +156,7 @@ Read chatlines, other info
 class ReadHandler(AbstractHandler):
     def get(self, basicauth_user, basicauth_pass):
         if self.authorized(basicauth_user, basicauth_pass):
-            self.write(self.botState.dump())
+            self.write(self.botState.dumpPublicMessages())
 
 """
 Send chatline from client to server
@@ -160,6 +176,24 @@ class WriteHandler(AbstractHandler):
                 self.botState.public(xmpp.nick, line)
 
             self.redirect(u"/")
+
+"""
+Send list of URLs to client
+"""
+
+class URLHandler(AbstractHandler):
+    def get(self, basicauth_user, basicauth_pass):
+        if self.authorized(basicauth_user, basicauth_pass):
+            self.write(self.botState.dumpURLs())
+
+"""
+Send list of private messages and mentions to client
+"""
+
+class PrivateMessageHandler(AbstractHandler):
+    def get(self, basicauth_user, basicauth_pass):
+        if self.authorized(basicauth_user, basicauth_pass):
+            self.write(self.botState.dumpPrivateMessages())
 
 """
 Receive geo information from client
@@ -332,6 +366,8 @@ if __name__ == '__main__':
         (r"/get", ReadHandler, dict (botState=botState, geoState=geoState)),
         (r"/put", WriteHandler, dict (botState=botState, geoState=geoState)),
         (r"/geo", GeoHandler, dict (botState=botState, geoState=geoState)),
+        (r"/urls", URLHandler, dict (botState=botState, geoState=geoState)),
+        (r"/priv", PrivateMessageHandler, dict (botState=botState, geoState=geoState)),
         (r"/config", ConfigHandler, dict (botState=botState, geoState=geoState))
     ])
 

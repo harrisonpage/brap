@@ -1,24 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+<meta name="application" content="brap/1.0.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta charset="utf-8"/>
 <link rel="apple-touch-icon" href="/static/icons/system.png"/>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
 <script src="/static/js/jquery.cookie.js"></script>
-<script src="/static/js/brap.js?23"></script>
-<style type="text/css" media="screen">@import "/static/css/brap.css?23";</style>
+<script src="/static/js/brap.js?46601"></script>
+<style type="text/css" media="screen">@import "/static/css/brap.css?46601";</style>
 <title></title>
 </head>
 <body>
     <div id="tabs" class="tabs">
-        <div id="tab_chat" class="tab"><img class="tab_button" id="tab_chat_img" src="/static/ui/daychat.png"></div>
-        <div id="tab_users" class="tab"><img class="tab_button" id="tab_users_img" src="/static/ui/dayusers.png"></div>
-        <div id="tab_images" class="tab"><img class="tab_button" id="tab_images_img" src="/static/ui/dayimages.png"></div>
-        <div id="tab_night" class="tab"><img class="tab_button" id="tab_night_img" src="/static/ui/daynight.png"></div>
-        <div id="tab_refresh" class="tab"><img class="tab_button" id="tab_refresh_img" src="/static/ui/dayrefresh.png"></div>
-        <div id="tab_settings" class="tab"><img class="tab_settings" id="tab_settings_img" src="/static/ui/daysettings.png"></div>
+        <div id="tab_chat" class="tab"><img class="tab_button" id="tab_chat_img" src="/static/ui/dayhome.png?46601"></div>
+        <div id="tab_users" class="tab"><img class="tab_button" id="tab_users_img" src="/static/ui/dayusers.png?46601"></div>
+        <div id="tab_msg" class="tab"><img class="tab_msg" id="tab_msg_img" src="/static/ui/daymail.png?46601"></div>
+        <div id="tab_images" class="tab"><img class="tab_button" id="tab_images_img" src="/static/ui/dayimages.png?46601"></div>
+        <div id="tab_links" class="tab"><img class="tab_button" id="tab_links_img" src="/static/ui/dayweb.png?46601"></div>
+        <div id="tab_night" class="tab"><img class="tab_button" id="tab_night_img" src="/static/ui/daynight.png?46601"></div>
+        <div id="tab_refresh" class="tab"><img class="tab_button" id="tab_refresh_img" src="/static/ui/dayreload.png?46601"></div>
+        <div id="tab_settings" class="tab"><img class="tab_settings" id="tab_settings_img" src="/static/ui/daysettings.png?46601"></div>
     </div>
     <div class="container">
         <div class="pane container_chat" id="container_chat">
@@ -34,16 +37,31 @@
             </div>
         </div>  
         <div class="pane container_users container_hiding" id="container_users">
+        <h1>Users</h1>
+            <div class="panel" id="user_viewer">
+            </div>
+        </div>
+        <div class="pane container_msg container_hiding" id="container_msg">
+            <h1>Private Messages</h1>
+            <div class="panel" id="msg_viewer">
+            </div>
         </div>
         <div class="pane container_images container_hiding" id="container_images">
+            <h1>Images</h1>
             <div class="panel" id="image_viewer">
             </div>
         </div>
+        <div class="pane container_links container_hiding" id="container_links">
+            <h1>Links</h1>
+            <div class="panel" id="link_viewer">
+            </div>
+        </div>
         <div class="pretty pane container_settings container_hiding" id="container_settings">
+            <h1>About Box</h1>
             <div class="about">
-                <span class="key">GitHub:</span>&nbsp;<a href="https://github.com/harrisonpage/brap">brap 1.0.0</a><br/>
                 <span id="state"></span><br/>
-                <span id="geo"></span>
+                <span id="geo"></span><br/>
+                <span class="key">GitHub:</span>&nbsp;<a href="https://github.com/harrisonpage/brap">brap 1.0.0</a>
             </div>
         </div>
     </div>  

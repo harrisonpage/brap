@@ -57,7 +57,7 @@ function getNextImageID()
 function link (url, label)
 {
     var link = (deref == undefined ? "" : deref) + url;
-    var buf = "<a target='_blank' href='" + escaped(link) + "'>" + escaped(label) + "</a>";
+    var buf = "<a rel='nofollow' target='_blank' href='" + escaped(link) + "'>" + escaped(label) + "</a>";
 
     if (url.match(/\.(gif|jpg|jpeg|png)$/) != null)
     {
@@ -118,7 +118,7 @@ function decorate_line (when, from, line)
         var height = icons[whom]['height'];
         var image = icons[whom]['image'];
         var style = "background-size: " + width + "px " + height + "px; background-image: url(" + image + "); display: block;";
-        return "<li class='striped' style='" + style + "'>" + 
+        return "<li style='" + style + "'>" + 
             "<span class='pretty from'>" + (from == '_default' ? 'server:' : from) + "</span>" + 
             "<span class='when options'>" + when + "</span>" + 
             "<br/>" + 
@@ -127,7 +127,7 @@ function decorate_line (when, from, line)
     }
 
     return "<li>" + 
-        "<span class='msg striped chat'>&lt;" + from + "&gt;</span>" + 
+        "<span class='msg chat'>&lt;" + from + "&gt;</span>" + 
         " " + 
         line + 
         " " + 
@@ -198,7 +198,7 @@ function process_chatline (v, i)
     msg = msg.replace(/\n/g, "<br />");
     if (v['type'] == 'private')
     {
-        msg = '<li><span class="msg striped private">' + msg + '</span></li>';
+        msg = '<li><span class="msg private">' + msg + '</span></li>';
     }
     return msg;
 }
@@ -323,25 +323,18 @@ function onUsersButtonClicked (pane)
 function onImagesButtonClicked (pane)
 {
     hidePanels (pane);
-    $("#image_viewer").html ("");
+    var buf = "";
 
     if (imageQueue.length)
     {
-        var id, url, link;
-        var img = [];
         for (var i = 0; i < imageQueue.length; i++)
         {
-            id = imageQueue[i]['id'];
-            url = imageQueue[i]['url'];
-            link = imageQueue[i]['link'];
-            img[i] = new Image();
-            img[i].border = 0;
-            img[i].width = 120;
-            img[i].vspace = 4;
-            img[i].hspace = 4;
-            img[i].src = url;
-            $("#image_viewer").append ("<a target='_blank' href='" + link + "'>" + img[i] + "</a><br clear='left'/>");
+            buf += "<a rel='nofollow' target='_blank' href='" + imageQueue[i]['link'] + "'>";
+            buf += "<img src='" + imageQueue[i]['url'] + "' border=0 width=120 vspace=4 hspace=4/>";
+            buf += "</a>";
         }
+        $("#image_count").html (": " + imageQueue.length);
+        $("#image_viewer").html (buf);
     }
     else
     {
@@ -418,7 +411,7 @@ function onURLsLoaded (data)
             (
                 prettyPrintDateTime (data[i]['date']), 
                 data[i]['from'], 
-                data[i]['url']
+                link (data[i]['url'], data[i]['url'])
             )
         );
     }

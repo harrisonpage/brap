@@ -7,7 +7,7 @@ web page.
 Features
 ========
 
-- Pleasant-looking HTML/CSS/JavaScript interface
+- Somewhat pleasant-looking HTML/CSS/JavaScript interface
 - Single-threaded Python server for backend
 - Password-protected web page via HTTP AUTH
 - Clickable links open in new browser window

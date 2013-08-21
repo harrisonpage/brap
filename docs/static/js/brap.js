@@ -118,7 +118,7 @@ function decorate_line (when, from, line)
         var height = icons[whom]['height'];
         var image = icons[whom]['image'];
         var style = "background-size: " + width + "px " + height + "px; background-image: url(" + image + "); display: block;";
-        return "<li style='" + style + "'>" + 
+        return "<li class='striped' style='" + style + "'>" + 
             "<span class='pretty from'>" + (from == '_default' ? 'server:' : from) + "</span>" + 
             "<span class='when options'>" + when + "</span>" + 
             "<br/>" + 
@@ -127,7 +127,7 @@ function decorate_line (when, from, line)
     }
 
     return "<li>" + 
-        "<span class='msg chat'>&lt;" + from + "&gt;</span>" + 
+        "<span class='msg striped chat'>&lt;" + from + "&gt;</span>" + 
         " " + 
         line + 
         " " + 
@@ -198,7 +198,7 @@ function process_chatline (v, i)
     msg = msg.replace(/\n/g, "<br />");
     if (v['type'] == 'private')
     {
-        msg = '<li><span class="msg private">' + msg + '</span></li>';
+        msg = '<li><span class="msg striped private">' + msg + '</span></li>';
     }
     return msg;
 }

@@ -16,6 +16,11 @@ h1
     font-size: 1.25em;
 }
 
+.striped:nth-child(odd)
+{
+    background-color: #efefef;
+}
+
 .about
 {
     text-align: left; 

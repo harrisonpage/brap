@@ -211,7 +211,7 @@ function getDefaultLimit()
     {
         return limits[screen.availWidth + "x" + screen.availHeight]; 
     }
-    return 10;
+    return Math.floor (screen.availHeight / 75);
 }
 
 var max = qs.hasOwnProperty('limit') ? qs['limit'] : getDefaultLimit();

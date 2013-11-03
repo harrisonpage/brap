@@ -19,6 +19,7 @@ Features
 - Track current location (lon, lat)
 - Track street address via maps.googleapis.com
 - Tracks URLs and images seen in chat
+- Pings server to check for new messages, notification appears in browser window title
 
 Config File
 ===========
@@ -33,6 +34,7 @@ Explanation of key/value pairs:
     deref          URL to a dereferer service
     icons          Dictionary of username to image, width and height
     alias          Link a username to another to avoid duplicate icon entries
+    refresh_rate   Time in milliseconds to check for new messages (60000 = 1m)
 
 Jerkcity-themed examples for icons are provided for your amusement. 
 
@@ -80,6 +82,16 @@ Under The Hood
 
 - JavaScript talks to Python via HTTP/JSON
 - Always-on Python bot maintains connection to Jabber server
+
+Refresh Rate
+============
+
+Adding a refresh_rate key to your config.json will make the client check for new
+messages every so often. The value should be specified in milliseconds. New 
+messages will be indicated in the browser window's title bar.
+
+If refresh_rate is not available or set to 0, this feature is disabled. By default
+this feature is disabled. 
 
 GeoLocation Features
 ====================

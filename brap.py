@@ -99,6 +99,9 @@ class BotState:
     def dumpURLs(self):
         return json.dumps(list(self.urls))
 
+    def dumpChatLines(self):
+        return json.dumps({'chatlines': self.chatlines})
+
     def authorized(self, username, password):
         return username == self.opts.user and password == self.opts.password
 
@@ -176,6 +179,15 @@ class WriteHandler(AbstractHandler):
                 self.botState.public(xmpp.nick, line)
 
             self.redirect(u"/")
+
+""" 
+Read # of chatlines seen
+"""
+
+class UpdateHandler(AbstractHandler):
+    def get(self, basicauth_user, basicauth_pass):
+        if self.authorized(basicauth_user, basicauth_pass):
+            self.write(self.botState.dumpChatLines())
 
 """
 Send list of URLs to client
@@ -365,6 +377,7 @@ if __name__ == '__main__':
         (r"/", MainHandler, dict (botState=botState, geoState=geoState)),
         (r"/get", ReadHandler, dict (botState=botState, geoState=geoState)),
         (r"/put", WriteHandler, dict (botState=botState, geoState=geoState)),
+        (r"/update", UpdateHandler, dict (botState=botState, geoState=geoState)),
         (r"/geo", GeoHandler, dict (botState=botState, geoState=geoState)),
         (r"/urls", URLHandler, dict (botState=botState, geoState=geoState)),
         (r"/priv", PrivateMessageHandler, dict (botState=botState, geoState=geoState)),

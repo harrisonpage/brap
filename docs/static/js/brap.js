@@ -17,6 +17,32 @@ var icons = {};
 var deref, lat, lon, loc;
 var nightmode = false;
 var imageQueue = [];
+var previousChatLines = 0;
+var loadingChatLines = false;
+
+/*
+ * Interval facade
+ */
+
+var intervals =
+{
+    ids: {},
+    exists: function (client)
+    {
+        return this.ids.hasOwnProperty (client);
+    },
+    set: function (client, callback, timeout)
+    {
+        this.ids[client] = setInterval (callback, timeout);
+    },
+    clearAll: function()
+    {
+        for (var client in this.ids)
+        {
+            clearInterval (this.ids[client]);
+        }
+    }
+};
 
 /*
  * Escape strings
@@ -246,7 +272,6 @@ function onConfigLoaded (config)
     {
         document.title = config['title'];
     }
-
     if (config.hasOwnProperty('favicon'))
     {   
         changeFavIcon (config['favicon']);
@@ -279,8 +304,21 @@ function onConfigLoaded (config)
     (
         {
             url: '/get',
-            dataType: 'json',
-            success: onChatLoaded
+            dataType: 'json'
+        }
+    ).
+    done
+    (
+        function (data)
+        {
+            onChatLoaded (data,config);
+        }
+    ).
+    fail 
+    (
+        function (data)
+        {
+            console.log ("fail loading chatlines");
         }
     );
 
@@ -343,8 +381,11 @@ function onMessageButtonClicked (pane)
         {
             url: '/priv',
             dataType: 'json',
-            success: onPrivateMessagesLoaded
         }
+    ).
+    done
+    (
+        onPrivateMessagesLoaded
     );
 }
 
@@ -357,8 +398,11 @@ function onLinksButtonClicked (pane)
         {
             url: '/urls',
             dataType: 'json',
-            success: onURLsLoaded
         }
+    ).
+    done
+    (
+        onURLsLoaded
     );
 }
 
@@ -453,7 +497,7 @@ function onPrivateMessagesLoaded (data)
  * Finished loading chat lines from server
  */
 
-function onChatLoaded (data)
+function onChatLoaded (data, config)
 {
     /*
      * Hmm: Something bad happened
@@ -533,6 +577,78 @@ function onChatLoaded (data)
     {
         $("#line").focus();
     }
+
+    /*
+     * Set interval for fetching updates
+     */
+
+    if (! intervals.exists ("chatlines") && config['refresh_rate'] != undefined && config['refresh_rate'] > 0)
+    {
+        previousChatLines = data['chatlines'];
+
+        intervals.set
+        (
+            "chatlines",
+            function() 
+            {
+                loadChatLines (config);
+            },
+            config['refresh_rate']
+        );
+    }
+}
+
+function loadChatLines (config)
+{
+    // prevent concurrent updates due to slow network
+    if (loadingChatLines)
+    {
+        return;
+    }
+
+    loadingChatLines = true;
+
+    $.ajax
+    (
+        {
+            url: '/update',
+            dataType: 'json',
+        }
+    ).
+    success
+    (
+        function(data)
+        {
+            onChatLinesLoaded (data, config);
+        }
+    ).
+    always
+    (
+        function()
+        {
+            loadingChatLines = false;
+        }
+    );
+}
+
+function onChatLinesLoaded (_data, config)
+{
+    document.title = config['title'];
+
+    // highest on server
+    var high = _data['chatlines'];
+
+    // compare to highest seen by client
+    if (previousChatLines < high)
+    {
+        // make a note of new messages in browser title
+        document.title += " (" + (high - previousChatLines) + ")";
+    }
+    else if (previousChatLines > high)
+    {
+        // catch up
+        previousChatLines = _data['chatlines'];
+    }
 }
 
 /*
@@ -582,11 +698,7 @@ function onAddressUpdate (data, lat, lon)
     $.ajax
     (
         {
-            url: '/geo?loc=' + loc + '&lat=' + lat + '&lon=' + lon,
-            success: function(_data) 
-            {
-                // console.log ("sent: " + loc + " => " + lat + "," + lon);
-            }
+            url: '/geo?loc=' + loc + '&lat=' + lat + '&lon=' + lon
         }
     );
 }
@@ -605,11 +717,14 @@ function onPositionUpdate (position)
     $.ajax
     (
         { 
-            url:'http://maps.googleapis.com/maps/api/geocode/json?latlng=' + lat + ',' + lon + '&sensor=true',
-            success: function (data)
-            {
-                onAddressUpdate (data, lat, lon);
-            }
+            url:'http://maps.googleapis.com/maps/api/geocode/json?latlng=' + lat + ',' + lon + '&sensor=true'
+        }
+    ).
+    done
+    (
+        function (data)
+        {
+            onAddressUpdate (data, lat, lon);
         }
     );
 }
@@ -696,9 +811,12 @@ $(document).ready
         (
             {
                 url: '/config',
-                dataType: 'json',
-                success: onConfigLoaded
+                dataType: 'json'
             }
+        ).
+        done
+        (
+            onConfigLoaded
         );
     }
 );

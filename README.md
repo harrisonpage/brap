@@ -22,6 +22,15 @@ Features
 - Tracks URLs and images seen in chat
 - Pings server to check for new messages, notification appears in window title
 
+Screenshots
+===========
+
+![MUC](/screenshots/brap_muc.png?raw=true "MUC")
+
+![Users](/screenshots/brap_userlist.png?raw=true "Users")
+
+![Images](/screenshots/brap_images.png?raw=true "Images (with night mode enabled)")
+
 Config File
 ===========
 

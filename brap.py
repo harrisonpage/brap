@@ -24,6 +24,7 @@ from optparse import OptionParser
 import sleekxmpp
 import subprocess
 import tornado.ioloop
+import tornado.httpserver
 import tornado.web
 import json
 import collections
@@ -343,6 +344,8 @@ if __name__ == '__main__':
     optp.add_option("-n", "--nick", dest="nick", help="MUC nickname")
     optp.add_option("-u", "--user", dest="user", help="HTTP AUTH username")
     optp.add_option("-l", "--http_port", dest="http_port", help="HTTP listening port")
+    optp.add_option("-c", "--cert", dest="cert", help="Path to SSL certificate")
+    optp.add_option("-k", "--key", dest="key", help="Path to SSL key")
     
     opts, args = optp.parse_args()
 
@@ -384,9 +387,15 @@ if __name__ == '__main__':
         (r"/config", ConfigHandler, dict (botState=botState, geoState=geoState))
     ])
 
+
     if not xmpp.connect():
         print("Can't connect")
     else:
         xmpp.process(threaded=True)
-        application.listen(opts.http_port)
+        """ Optional HTTPS support """
+        if (opts.cert != None and opts.key != None):
+            http_server = tornado.httpserver.HTTPServer(application, ssl_options= { "certfile": opts.cert, "keyfile": opts.key })
+        else:
+            http_server = tornado.httpserver.HTTPServer(application)
+        http_server.listen(opts.http_port)
         tornado.ioloop.IOLoop.instance().start()

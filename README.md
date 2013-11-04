@@ -9,6 +9,7 @@ Features
 
 - Somewhat pleasant-looking HTML/CSS/JavaScript interface
 - Single-threaded Python server for backend
+- SSL
 - Password-protected web page via HTTP AUTH
 - Clickable links open in new browser window
 - Clickable hashtags open to twitter
@@ -19,7 +20,7 @@ Features
 - Track current location (lon, lat)
 - Track street address via maps.googleapis.com
 - Tracks URLs and images seen in chat
-- Pings server to check for new messages, notification appears in browser window title
+- Pings server to check for new messages, notification appears in window title
 
 Config File
 ===========
@@ -56,6 +57,8 @@ Options:
     -n NICK, --nick=NICK                              MUC nickname
     -u USER, --user=USER                              HTTP AUTH username
     -l HTTP_PORT, --http_port=HTTP_PORT               HTTP listening port
+    -c CERTIFICATE, --cert=CERTIFICATE                Path to SSL certificate
+    -k KEY, --key=KEY                                 Path to SSL private key
 
 Minimal Example
 ===============
@@ -64,10 +67,17 @@ Start up brap (perhaps in a screen session):
 
     ./brap.py -d -u USERNAME -q -j JID -r CHANNEL -n NICK -x PASSWORD -l 6502
 
-Open your browser to http://localhost:6502/ and login. For the username, use the 
-value you specified with -u. For the password, use the value you specified with 
--p or were prompted for. This is different from the room password as specified 
-with -x.
+Open your browser to http://localhost:6502/ and login via HTTP AUTH. 
+
+For the username, use the value you specified with -u. 
+
+For the password, use the value you specified with -p or were prompted for. 
+This is different from the room password as specified with -x.
+
+Supply paths to an SSL certificate/key via -c and -k and instead load 
+an https URL e.g.
+
+    ./brap.py -d -u USERNAME -q -j JID -r CHANNEL -n NICK -x PASSWORD -l 6502 -c ~/certs/duh.cert -k ~/certs/duh.key
 
 Ingredients
 ===========
@@ -126,7 +136,7 @@ Author
 ======
 
 - Harrison Page <harrisonpage@gmail.com>
-- http://hanford.org/harrison/
+- https://hanford.org/harrison/
 - https://github.com/harrisonpage/brap
 - Created 22-Jul-2013
 

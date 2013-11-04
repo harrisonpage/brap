@@ -375,6 +375,17 @@ if __name__ == '__main__':
     xmpp.register_plugin('xep_0045') # Multi-User Chat
     xmpp.register_plugin('xep_0199') # XMPP Ping
 
+    """
+    /static/            Assets: HTML, CSS, JS, images
+    /                   Load console.html
+    /get                Read chat lines
+    /put                Write a chat line
+    /update             Check for updates
+    /geo                Write geo info (long, lat, address)
+    /urls               Get URLs
+    /priv               Get private messages
+    /config             Load config.json
+    """
     application = tornado.web.Application([
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "docs/static"}),
         (r"/", MainHandler, dict (botState=botState, geoState=geoState)),

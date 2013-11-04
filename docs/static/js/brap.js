@@ -65,7 +65,7 @@ function escaped (string)
         /[";<>\/&]/g, 
         function (s) 
         {
-            return entities[s];
+            return entities[s] == undefined ? s : entities[s];
         }
     );
 }

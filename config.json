@@ -3,6 +3,7 @@
     "favicon": "http://www.google.com/favicon.ico",
     "geolocation": "disabled",
     "deref": "http://www.dereferer.org/?",
+    "refresh_rate": 0,
     "icons":
     {
         "_default":

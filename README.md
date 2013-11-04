@@ -25,11 +25,11 @@ Features
 Screenshots
 ===========
 
-![MUC](/screenshots/brap_mug.png "MUC")
+![MUC](/screenshots/brap_muc.png "MUC")
 
 ![Users](/screenshots/brap_userlist.png "Users")
 
-![Images](/screenshots/brap_userlist.png "Images (with night mode enabled)")
+![Images](/screenshots/brap_images.png "Images (with night mode enabled)")
 
 Config File
 ===========

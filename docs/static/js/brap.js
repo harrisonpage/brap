@@ -16,7 +16,6 @@ var aliases = {};
 var icons = {};
 var deref, lat, lon, loc;
 var nightmode = false;
-var imageQueue = [];
 var previousChatLines = 0;
 var loadingChatLines = false;
 
@@ -97,12 +96,6 @@ function render_line (body)
         {
             // clickable links
             list.push (link (word, word));
-
-            // collect images seen
-            if (word.match(/\.(gif|jpg|jpeg|png)$/) != null)
-            {
-                imageQueue.push (word);
-            }
         }
         else if (word.substr (0, 1) == '#')
         {
@@ -353,22 +346,47 @@ function onUsersButtonClicked (pane)
 function onImagesButtonClicked (pane)
 {
     hidePanels (pane);
-
-    if (imageQueue.length)
-    {
-        var buf = "";
-        for (var i = 0; i < imageQueue.length; i++)
+    $.ajax
+    (
         {
-            buf += "<a rel='nofollow' target='_blank' href='" + imageQueue[i] + "'>";
-            buf += "<img src='" + imageQueue[i] + "' border=0 width=120 vspace=4 hspace=4/>";
-            buf += "</a>";
+            url: '/urls',
+            dataType: 'json',
         }
-        $("#image_count").html (": " + imageQueue.length);
-        $("#image_viewer").html (buf);
+    ).
+    done
+    (
+        function (data)
+        {
+            onURLsLoaded (data, handleImageURLs);
+        }
+    );
+}
+
+function handleImageURLs (data)
+{
+    var urls = [];
+    var url;
+    for (var i in data)
+    {
+        url = data[i]['url'];
+        if (url.match(/\.(gif|jpg|jpeg|png)$/) != null)
+        {
+            urls.push 
+            (
+                "<a rel='nofollow' target='_blank' href='" + url + "'>" + 
+                "<img src='" + url + "' border=0 width=120 vspace=4 hspace=4/>" + 
+                "</a>"
+            );
+        }
+    }
+    if (urls.length)
+    {
+        $("#image_viewer").html (urls.join (" "));
+        $("#image_count").html (": " + urls.length);
     }
     else
     {
-        $("#image_viewer").html ("No images");
+        $("#image_viewer").html ("No URLs");
     }
 }
 
@@ -402,7 +420,10 @@ function onLinksButtonClicked (pane)
     ).
     done
     (
-        onURLsLoaded
+        function (data)
+        {
+            onURLsLoaded (data, handleURLs);
+        }
     );
 }
 
@@ -436,7 +457,12 @@ function hidePanels (pane)
  * Finished loading list of URLs from server
  */
 
-function onURLsLoaded (data)
+function onURLsLoaded (data, cb)
+{
+    cb (data);
+}
+
+function handleURLs (data)
 {
     var urls = [];
     for (var i in data)
@@ -509,12 +535,6 @@ function onChatLoaded (data, config)
         return;
     }
     
-    /*
-     * Reset image queue
-     */
-
-    imageQueue = [];
-
     /*
      * Iterate over chatlines, apply formatting
      */

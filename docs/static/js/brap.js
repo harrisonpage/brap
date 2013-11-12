@@ -403,7 +403,7 @@ function onMessageButtonClicked (pane)
     ).
     done
     (
-        onPrivateMessagesLoaded
+        onMentionsLoaded
     );
 }
 
@@ -489,10 +489,10 @@ function handleURLs (data)
 }
 
 /*
- * Finished loading private messages/mentions from server
+ * Finished loading mentions from server
  */
 
-function onPrivateMessagesLoaded (data)
+function onMentionsLoaded (data)
 {
     var msg, msgs = [];
     for (var i in data['privmsgs'])

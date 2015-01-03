@@ -42,23 +42,6 @@ else:
     raw_input = input
 
 """ 
-User Location State: Track last known location, user agent, lon and lat of user
-"""
-
-class GeoState:
-    def __init__(self):
-        self.loc = "unknown"
-        self.agent = "unknown"
-        self.lat = 0
-        self.lon = 0
-    
-    def setLocation(self, loc, lat, lon):
-        self.loc = loc
-        if self.loc == '':
-            if self.lon != 0 and self.lat != 0:
-                self.loc = lat + ',' + lon
-
-""" 
 Bot State: Track options, public/private messages, handle authentication
 """
 
@@ -89,6 +72,7 @@ class BotState:
 
     def private(self, _from, body):
         self.privmsgs.append({'type': 'private', 'from': str(_from), 'body': body, 'date': time.mktime(time.gmtime())})
+        self.pubmsgs.append({'type': 'private', 'from': str(_from), 'body': body, 'date': time.mktime(time.gmtime())})
         self.chatlines += 1
 
     def dumpPublicMessages(self):
@@ -138,9 +122,8 @@ Web Server
 
 @require_basic_auth
 class AbstractHandler(tornado.web.RequestHandler):
-    def initialize(self, botState, geoState):
+    def initialize(self, botState):
         self.botState = botState
-        self.geoState = geoState
 
     def get(self, basicauth_user, basicauth_pass):
         pass
@@ -170,12 +153,8 @@ class WriteHandler(AbstractHandler):
     def post(self, basicauth_user, basicauth_pass):
         if self.authorized(basicauth_user, basicauth_pass):
             line = self.get_argument ('line', "")
-            loc = self.get_argument ('loc', "")
-            lat = self.get_argument ('lat', 0)
-            lon = self.get_argument ('lon', 0)
             
             if line != "":
-                self.geoState.setLocation (loc, lat, lon)
                 xmpp.send_message(mto=xmpp.room, mbody=line, mtype='groupchat')
                 self.botState.public(xmpp.nick, line)
 
@@ -209,19 +188,6 @@ class PrivateMessageHandler(AbstractHandler):
             self.write(self.botState.dumpPrivateMessages())
 
 """
-Receive geo information from client
-"""
-
-class GeoHandler(AbstractHandler):
-    def get(self, basicauth_user, basicauth_pass):
-        if self.authorized(basicauth_user, basicauth_pass):
-            loc = self.get_argument ('loc', "")
-            lat = self.get_argument ('lat', 0)
-            lon = self.get_argument ('lon', 0)
-            self.geoState.agent = self.request.headers["User-Agent"]
-            self.geoState.setLocation (loc, lat, lon)
-
-"""
 Serve files
 """
 
@@ -248,7 +214,7 @@ XMPP Bot
 """
 
 class MUCBot(sleekxmpp.ClientXMPP):
-    def __init__(self, opts, botState, geoState):
+    def __init__(self, opts, botState):
         sleekxmpp.ClientXMPP.__init__(self, opts.jid, opts.password)
 
         # options
@@ -258,7 +224,6 @@ class MUCBot(sleekxmpp.ClientXMPP):
 
         # states
         self.botState = botState
-        self.geoState = geoState
 
         # event handlers
         self.add_event_handler("session_start", self.start)
@@ -285,21 +250,11 @@ class MUCBot(sleekxmpp.ClientXMPP):
         print("[disconnected]")
         os._exit(1)
 
-    """ internal commands """
-    def special(self, type, whom, body):
-        msg = xmpp.nick + ": " + self.geoState.loc
-        if body == '!help':
-            if type == 'private':
-                xmpp.send_message(mto=whom, mbody=msg)
-            else:
-                xmpp.send_message(mto=xmpp.room, mbody=msg, mtype='groupchat')
-
     """ private messages """
     def message(self, msg):
         if msg['nick'] != self.nick and msg['type'] in ('normal', 'chat'):
-            print("[message] %s: %s" % (msg['from'], msg['body']))
+            print("[private message] %s: %s" % (msg['from'], msg['body']))
             self.botState.private(msg['from'], msg['body'])
-            self.special('private', str(msg['from']), msg['body'])
             self.botState.save('update_date', time.mktime(time.gmtime()))
 
     """ public messages """
@@ -307,7 +262,6 @@ class MUCBot(sleekxmpp.ClientXMPP):
         if msg['mucnick'] != self.nick:
             print("[mucmessage] " + msg['mucnick'] + ": " + msg['body'])
             self.botState.public(msg['mucnick'], msg['body'])
-            self.special('public', msg['mucnick'], msg['body'])
             self.botState.save('update_date', time.mktime(time.gmtime()))
 
     """ list of users """
@@ -367,10 +321,9 @@ if __name__ == '__main__':
     if opts.http_port is None:
         opts.http_port = 8888
 
-    geoState = GeoState()
     botState = BotState(opts)
 
-    xmpp = MUCBot(opts, botState, geoState)
+    xmpp = MUCBot(opts, botState)
     xmpp.register_plugin('xep_0030') # Service Discovery
     xmpp.register_plugin('xep_0045') # Multi-User Chat
     xmpp.register_plugin('xep_0199') # XMPP Ping
@@ -381,23 +334,20 @@ if __name__ == '__main__':
     /get                Read chat lines
     /put                Write a chat line
     /update             Check for updates
-    /geo                Write geo info (long, lat, address)
     /urls               Get URLs
     /priv               Get private messages
     /config             Load config.json
     """
     application = tornado.web.Application([
         (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": "docs/static"}),
-        (r"/", MainHandler, dict (botState=botState, geoState=geoState)),
-        (r"/get", ReadHandler, dict (botState=botState, geoState=geoState)),
-        (r"/put", WriteHandler, dict (botState=botState, geoState=geoState)),
-        (r"/update", UpdateHandler, dict (botState=botState, geoState=geoState)),
-        (r"/geo", GeoHandler, dict (botState=botState, geoState=geoState)),
-        (r"/urls", URLHandler, dict (botState=botState, geoState=geoState)),
-        (r"/priv", PrivateMessageHandler, dict (botState=botState, geoState=geoState)),
-        (r"/config", ConfigHandler, dict (botState=botState, geoState=geoState))
+        (r"/", MainHandler, dict (botState=botState)),
+        (r"/get", ReadHandler, dict (botState=botState)),
+        (r"/put", WriteHandler, dict (botState=botState)),
+        (r"/update", UpdateHandler, dict (botState=botState)),
+        (r"/urls", URLHandler, dict (botState=botState)),
+        (r"/priv", PrivateMessageHandler, dict (botState=botState)),
+        (r"/config", ConfigHandler, dict (botState=botState))
     ])
-
 
     if not xmpp.connect():
         print("Can't connect")

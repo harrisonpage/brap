@@ -14,7 +14,7 @@ var qs=function(e){if(e=="")return{};var t={};for(var n=0;n<e.length;++n){var r=
 
 var aliases = {};
 var icons = {};
-var deref, lat, lon, loc;
+var deref;
 var nightmode = false;
 var previousChatLines = 0;
 var loadingChatLines = false;
@@ -47,7 +47,7 @@ var intervals =
  * Escape strings
  */
 
-var entities = 
+var entities =
 {
     '"': '&quot;',
     "'": '&#39;',
@@ -61,8 +61,8 @@ function escaped (string)
 {
     return String(string).replace
     (
-        /[";<>\/&]/g, 
-        function (s) 
+        /[";<>\/&]/g,
+        function (s)
         {
             return entities[s] == undefined ? s : entities[s];
         }
@@ -70,7 +70,7 @@ function escaped (string)
 }
 
 /*
- * Generate link with optional deferer service 
+ * Generate link with optional deferer service
  */
 
 function link (url, label)
@@ -114,9 +114,15 @@ function render_line (body)
  * Draw username + chatline + timestamp
  */
 
-function decorate_line (when, from, line)
+function decorate_line (when, from, line, type)
 {
     var whom = from;
+
+    if (whom.indexOf ('@'))
+    {
+        var chunks = whom.split ('@');
+        whom = chunks[0];
+    }
 
     if (aliases.hasOwnProperty(from))
     {
@@ -129,39 +135,45 @@ function decorate_line (when, from, line)
         var height = icons[whom]['height'];
         var image = icons[whom]['image'];
         var style = "background-size: " + width + "px " + height + "px; background-image: url(" + image + "); display: block;";
-        return "<li style='" + style + "'>" + 
-            "<span class='pretty from'>" + (from == '_default' ? 'server:' : from) + "</span>" + 
-            "<span class='when options'>" + when + "</span>" + 
-            "<br/>" + 
-            line + 
+
+        if (type == 'private')
+        {
+            style += " color: #dd0000;";
+        }
+
+        return "<li style='" + style + "'>" +
+            "<span class='pretty from'>" + (from == '_default' ? 'server:' : from) + "</span>" +
+            "<span class='when options'>" + when + "</span>" +
+            "<br/>" +
+            line +
             "</li>";
     }
 
-    return "<li>" + 
-        "<span class='msg chat'>&lt;" + from + "&gt;</span>" + 
-        " " + 
-        line + 
-        " " + 
+    return "<li>" +
+        "<span class='msg chat'>&lt;" + from + "&gt;</span>" +
+        " " +
+        line +
+        " " +
         "<span class='when options'>" + when + "</span></li>";
 }
 
 function decorate_server_message (line)
 {
-    return decorate_line ('', '_default', line);
+    return decorate_line ('', '_default', line, '');
 }
 
 /*
  * Pretty-print date/time
  */
 
-Date.prototype.stdTimezoneOffset = function() 
+Date.prototype.stdTimezoneOffset = function()
 {
     var jan = new Date(this.getFullYear(), 0, 1);
     var jul = new Date(this.getFullYear(), 6, 1);
     return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
 }
 
-Date.prototype.dst = function() 
+Date.prototype.dst = function()
 {
     return this.getTimezoneOffset() < this.stdTimezoneOffset();
 }
@@ -188,7 +200,7 @@ function prettyPrintTime (date)
     return chunks[4];
 }
 
-function getDate(date) 
+function getDate(date)
 {
     var d = new Date(date*1000);
     d.setTime(d.valueOf() - (60000 * d.getTimezoneOffset()) - (d.dst() ? 60000 * 60 : 0));
@@ -203,14 +215,10 @@ function process_chatline (v, i)
 {
     var when = prettyPrintTime (v['date']);
     var list = render_line (v['body']);
-    var msg = v['from'] == '' 
+    var msg = v['from'] == ''
         ? decorate_server_message (v['body'])
-        : decorate_line (when, v['from'], list.join (" "));
+        : decorate_line (when, v['from'], list.join (" "), v['type']);
     msg = msg.replace(/\n/g, "<br />");
-    if (v['type'] == 'private')
-    {
-        msg = '<li><span class="msg private">' + msg + '</span></li>';
-    }
     return msg;
 }
 
@@ -218,7 +226,7 @@ function process_chatline (v, i)
  * Defaults for various devices
  */
 
-var limits = 
+var limits =
 {
     '320x548': 5, // iPhone 5
     '320x460': 4, // iPhone 4
@@ -228,9 +236,9 @@ function getDefaultLimit()
 {
     if (limits[screen.availWidth + "x" + screen.availHeight] != undefined)
     {
-        return limits[screen.availWidth + "x" + screen.availHeight]; 
+        return limits[screen.availWidth + "x" + screen.availHeight];
     }
-    return Math.floor (screen.availHeight / 75);
+    return 10; // Math.floor (screen.availHeight / 75);
 }
 
 var max = qs.hasOwnProperty('limit') ? qs['limit'] : getDefaultLimit();
@@ -252,7 +260,7 @@ function changeFavIcon (url)
 }
 
 /*
- * Fired when /config.json is loaded 
+ * Fired when /config.json is loaded
  */
 
 function onConfigLoaded (config)
@@ -266,20 +274,15 @@ function onConfigLoaded (config)
         document.title = config['title'];
     }
     if (config.hasOwnProperty('favicon'))
-    {   
-        changeFavIcon (config['favicon']);
-    }
-
-    if (config.hasOwnProperty('geolocation') && config['geolocation'] == 'enabled' && navigator.geolocation)
     {
-        navigator.geolocation.getCurrentPosition (onPositionUpdate);
+        changeFavIcon (config['favicon']);
     }
 
     if (config.hasOwnProperty('icons'))
     {
         icons = config['icons'];
     }
-    
+
     if (config.hasOwnProperty('aliases'))
     {
         aliases = config['aliases'];
@@ -307,7 +310,7 @@ function onConfigLoaded (config)
             onChatLoaded (data,config);
         }
     ).
-    fail 
+    fail
     (
         function (data)
         {
@@ -326,7 +329,7 @@ function onConfigLoaded (config)
     $("#tab_links").click ( function() { onLinksButtonClicked ('container_links') } );
     $("#tab_night").click ( function() { toggleNightMode() } );
     $("#tab_settings").click ( function() { onSettingsButtonClicked ('container_settings') } );
-    $("#tab_refresh").click ( function() { document.location = "/" } );
+    $("#tab_refresh").click ( function() { document.location = "/?limit=50" } );
 }
 
 /*
@@ -371,10 +374,10 @@ function handleImageURLs (data)
         url = data[i]['url'];
         if (url.match(/\.(gif|jpg|jpeg|png)$/) != null)
         {
-            urls.push 
+            urls.push
             (
-                "<a rel='nofollow' target='_blank' href='" + url + "'>" + 
-                "<img src='" + url + "' border=0 width=120 vspace=4 hspace=4/>" + 
+                "<a rel='nofollow' target='_blank' href='" + url + "'>" +
+                "<img src='" + url + "' border=0 width=120 vspace=4 hspace=4/>" +
                 "</a>"
             );
         }
@@ -435,7 +438,6 @@ function onRefreshButtonClicked (pane)
 function onSettingsButtonClicked (pane)
 {
     hidePanels (pane);
-    showInfo();
 }
 
 /*
@@ -467,13 +469,14 @@ function handleURLs (data)
     var urls = [];
     for (var i in data)
     {
-        urls.push 
+        urls.push
         (
-            decorate_line 
+            decorate_line
             (
-                prettyPrintDateTime (data[i]['date']), 
-                data[i]['from'], 
-                link (data[i]['url'], data[i]['url'])
+                prettyPrintDateTime (data[i]['date']),
+                data[i]['from'],
+                link (data[i]['url'], data[i]['url']),
+                ''
             )
         );
     }
@@ -504,7 +507,8 @@ function onMentionsLoaded (data)
             (
                 prettyPrintDateTime (msg['date']),
                 msg['from'],
-                render_line (msg['body']).join (" ")
+                render_line (msg['body']).join (" "),
+                ''
             )
         );
     }
@@ -529,12 +533,12 @@ function onChatLoaded (data, config)
      * Hmm: Something bad happened
      */
 
-    if (! data.hasOwnProperty('state')) 
+    if (! data.hasOwnProperty('state'))
     {
         console.log ("Bogus reply from server");
         return;
     }
-    
+
     /*
      * Iterate over chatlines, apply formatting
      */
@@ -563,13 +567,13 @@ function onChatLoaded (data, config)
     $('#user_count').html (": " + users.length);
 
     /*
-     * Update chatlines 
+     * Update chatlines
      */
 
     $('.console').html
     (
-        "<ul>" + 
-        chatlines.join ("")  + 
+        "<ul>" +
+        chatlines.join ("")  +
         "</ul>"
     );
 
@@ -577,15 +581,15 @@ function onChatLoaded (data, config)
      * Debug info
      */
 
-    $('#state').html 
+    $('#state').html
     (
-        pair ("Connected", prettyPrintDate (data['state']['create_date'])) + "<br/>" + 
-        pair ("Updated", prettyPrintDate (data['state']['update_date'])) + "<br/>" + 
-        pair ("Room", escaped (data['options']['room'])) + "<br/>" + 
-        pair ("Subject", (data['state']['subject'] == undefined ? "-none-" : escaped (data['state']['subject']))) + "<br/>" + 
-        pair ("Nick", escaped (data['options']['nick'])) + "<br/>" + 
-        pair ("JID", escaped (data['options']['jid'])) + "<br/>" + 
-        pair ("Dimensions", screen.availWidth + "x" + screen.availHeight) + "<br/>" + 
+        pair ("Connected", prettyPrintDate (data['state']['create_date'])) + "<br/>" +
+        pair ("Updated", prettyPrintDate (data['state']['update_date'])) + "<br/>" +
+        pair ("Room", escaped (data['options']['room'])) + "<br/>" +
+        pair ("Subject", (data['state']['subject'] == undefined ? "-none-" : escaped (data['state']['subject']))) + "<br/>" +
+        pair ("Nick", escaped (data['options']['nick'])) + "<br/>" +
+        pair ("JID", escaped (data['options']['jid'])) + "<br/>" +
+        pair ("Dimensions", screen.availWidth + "x" + screen.availHeight) + "<br/>" +
         pair ("Chatlines", escaped (data['chatlines']))
     );
 
@@ -609,7 +613,7 @@ function onChatLoaded (data, config)
         intervals.set
         (
             "chatlines",
-            function() 
+            function()
             {
                 loadChatLines (config);
             },
@@ -686,7 +690,7 @@ function getUserList (idiots)
     var decorated = [];
     for (var i = 0; i < users.length; i++)
     {
-        decorated.push (decorate_line ('', users[i], ''));
+        decorated.push (decorate_line ('', users[i], '', ''));
     }
     return decorated;
 }
@@ -694,7 +698,7 @@ function getUserList (idiots)
 function sort (a, b)
 {
   var c = a.toLowerCase();
-  var d = b.toLowerCase(); 
+  var d = b.toLowerCase();
   return ((c < d) ? -1 : ((c > d) ? 1 : 0));
 }
 
@@ -705,61 +709,6 @@ function sort (a, b)
 function pair (key, value)
 {
     return "<span class='key'>" + key + ":" + "</span>" + "&nbsp;" + value;
-}
-
-/*
- * Google returns street address
- */
-
-function onAddressUpdate (data, lat, lon)
-{
-    loc = data.results[0].formatted_address;
-    $('input[name="loc"]').val (loc);
-    $.ajax
-    (
-        {
-            url: '/geo?loc=' + loc + '&lat=' + lat + '&lon=' + lon
-        }
-    );
-}
-
-/*
- * Browser makes lat/lon available
- */
-
-function onPositionUpdate (position)
-{
-    lat = position.coords.latitude;
-    lon = position.coords.longitude;
-    $('input[name="lat"]').val (lat);
-    $('input[name="lon"]').val (lon);
-
-    $.ajax
-    (
-        { 
-            url:'https://maps.googleapis.com/maps/api/geocode/json?latlng=' + lat + ',' + lon + '&sensor=true'
-        }
-    ).
-    done
-    (
-        function (data)
-        {
-            onAddressUpdate (data, lat, lon);
-        }
-    );
-}
-
-/*
- * Toggle Info Pane
- */
-
-function showInfo()
-{
-    $('#geo').html 
-    (
-        pair ("Lat/Lon", lat + "," + lon) + "<br/>" + 
-        pair ("Address", loc)
-    );
 }
 
 /*
@@ -792,7 +741,7 @@ function getMode()
 
 $(document).ready
 (
-    function() 
+    function()
     {
         /*
          * Day/Night: Change colors, button label
@@ -812,8 +761,8 @@ $(document).ready
             $("#moreButton").attr("href", "/");
             $("#moreLabel").html ("Less");
         }
-    
-        var tabCount = $(".tab").size() 
+
+        var tabCount = $(".tab").size()
         var tabWidth = Math.floor (($("#tabs").width() / tabCount) - (tabCount*2));
         $('.tab').each
         (

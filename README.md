@@ -17,8 +17,6 @@ Features
 - Night mode
 - Set a custom favicon.ico
 - Set custom icons per friend
-- Track current location (lon, lat)
-- Track street address via maps.googleapis.com
 - Tracks URLs and images seen in chat
 - Pings server to check for new messages, notification appears in window title
 
@@ -40,7 +38,6 @@ Explanation of key/value pairs:
 
     title          Page title shown by client
     favicon        URL to an ico, png or gif file for your browser to consume
-    geolocation    Set to "enabled" to pass lon, lat and address to the server
     deref          URL to a dereferer service
     icons          Dictionary of username to image, width and height
     alias          Link a username to another to avoid duplicate icon entries
@@ -112,20 +109,6 @@ messages will be indicated in the browser window's title bar.
 If refresh_rate is not available or set to 0, this feature is disabled. By default
 this feature is disabled. 
 
-GeoLocation Features
-====================
-
-Enabling this feature assumes you want to share your current location with other
-users. By default this is off. You can enable this by changing the value of
-geolocation in config.json to enabled. For each time you load the page, the lon/lat
-as reported by your browser will be stored on the server and, if available from
-Google, your street address. 
-
-Your browser may prompt you to enable these features repeatedly. This might get annoying. 
-
-Users can type !help in channel to show your current location: lon, lat and 
-street address if available.
-
 Icons
 =====
 
@@ -137,7 +120,7 @@ TODO
 
 - Specify arguments to deref URL e.g. http://whatever/?url=%%URL%% or something
 - Separate HTTP AUTH password from Jabber server password
-- Support for sending/receiving to private messages
+- Support for sending private messages
 - Support for multiple rooms
 - Fetch user icons from Jabber server instead of config.json
 
